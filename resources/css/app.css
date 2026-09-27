@@ -1,0 +1,51 @@
+@import 'tailwindcss';
+@import '../../vendor/livewire/flux/dist/flux.css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
+@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
+
+@theme {
+  /* Azul fidelita: botones, enlaces, estados activos y sellos */
+  --color-brand: oklch(0.581 0.229 263.9);
+
+  /* Azul profundo: hover, estados activos y gradientes */
+  --color-brand-700: oklch(0.488 0.214 264.2);
+
+  /* Azul suave: fondos de badges, chips y elementos destacados */
+  --color-brand-soft: color-mix(
+    in oklch,
+    oklch(0.581 0.229 263.9) 10%,
+    transparent
+  );
+
+  /* Ámbar: acentos, recompensas, destellos e indicadores positivos */
+  --color-accent: oklch(0.813 0.165 75);
+    --color-glass:oklch(100% 0 0 / .55);
+  /* Texto principal y elementos que requieren alto contraste */
+  --color-ink: oklch(0.257 0.026 255.8);
+
+  /* Fondo general de la aplicación, con un matiz azul muy suave */
+  --color-background: oklch(0.978 0.008 253.9);
+
+  /* Superficie de tarjetas, modales, paneles y componentes elevados */
+  --color-card: oklch(1 0 0);
+
+  /* Texto secundario, descripciones, placeholders y metadatos */
+  --color-muted-foreground: oklch(0.5 0.03 255);
+
+  /* Bordes sutiles para separar superficies y componentes */
+  --color-border: color-mix(
+    in oklch,
+    oklch(0.257 0.026 255.8) 8%,
+    transparent
+  );
+}
+
+
+body{
+    background-color: var(--color-fidentta-navy);
+color: var(--color-text);
+  font-family: 'Bricolage Grotesque Variable', sans-serif;
+}
