@@ -1,13 +1,12 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
     @include('partials.head')
 </head>
 
-<body class="min-h-screen flex gap-2 bg-white dark:bg-zinc-800">
-    <flux:sidebar sticky collapsible="mobile"
-        class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+<body class="flex min-h-screen gap-2 ">
+    <flux:sidebar sticky collapsible="mobile" class="border-e  bg-ink">
         <flux:sidebar.header>
             <x-app-logo :sidebar="true" href="{{ route('dashboard') }}" wire:navigate />
             <flux:sidebar.collapse class="lg:hidden" />
@@ -15,32 +14,49 @@
 
         <livewire:team-switcher />
 
-        <flux:sidebar.nav>
-            <flux:sidebar.group :heading="__('Platform')" class="grid">
+        <flux:sidebar.nav class="">
+            <flux:sidebar.group :heading="__('Platform')" class="grid text-ink">
                 <flux:sidebar.item icon="home"
                     :href="route('dashboard', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
-                    :current="request()->routeIs('dashboard') || request()->routeIs('dashboard')" wire:navigate>
+                    :current="request()->routeIs('dashboard')"
+                    class="text-ink hover:bg-brand-soft hover:text-brand data-current:bg-brand-soft data-current:text-brand"
+                    wire:navigate>
                     {{ __('Inicio') }}
                 </flux:sidebar.item>
                 <flux:sidebar.item icon="users"
                     :href="route('dashboard.clientes', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
-                    :current="request()->routeIs('dashboard.clientes')" wire:navigate>
+                    :current="request()->routeIs('dashboard.clientes')"
+                    class="text-ink hover:bg-brand-soft hover:text-brand data-current:bg-brand-soft data-current:text-brand"
+                    wire:navigate>
                     {{ __('Clientes') }}
                 </flux:sidebar.item>
                 <flux:sidebar.item icon="gift"
                     :href="route('dashboard.fidelizacion', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
-                    :current="request()->routeIs('dashboard.fidelizacion')" wire:navigate>
+                    :current="request()->routeIs('dashboard.fidelizacion')"
+                    class="text-ink hover:bg-brand-soft hover:text-brand data-current:bg-brand-soft data-current:text-brand"
+                    wire:navigate>
                     {{ __('Fidelizacion') }}
                 </flux:sidebar.item>
                 <flux:sidebar.item icon="credit-card"
                     :href="route('dashboard.tarjeta', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
-                    :current="request()->routeIs('dashboard.tarjeta')" wire:navigate>
+                    :current="request()->routeIs('dashboard.tarjeta')"
+                    class="text-ink hover:bg-brand-soft hover:text-brand data-current:bg-brand-soft data-current:text-brand"
+                    wire:navigate>
                     {{ __('Tarjeta') }}
                 </flux:sidebar.item>
                 <flux:sidebar.item icon="cog"
                     :href="route('dashboard.configuracion', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
-                    :current="request()->routeIs('dashboard.configuracion')" wire:navigate>
+                    :current="request()->routeIs('dashboard.configuracion')"
+                    class="text-ink hover:bg-brand-soft hover:text-brand data-current:bg-brand-soft data-current:text-brand"
+                    wire:navigate>
                     {{ __('Configuracion') }}
+                </flux:sidebar.item>
+                <flux:sidebar.item icon="building-storefront" aria-hidden="true"
+                    :href="route('dashboard.locales', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
+                    :current="request()->routeIs('dashboard.locales', 'locations.index')"
+                    class="text-ink hover:bg-brand-soft hover:text-brand data-current:bg-brand-soft data-current:text-brand"
+                    wire:navigate>
+                    {{ __('Locales') }}
                 </flux:sidebar.item>
             </flux:sidebar.group>
         </flux:sidebar.nav>
@@ -48,7 +64,7 @@
 
 
 
-        <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
+            <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
     </flux:sidebar>
 
     <!-- Mobile User Menu -->
@@ -62,7 +78,7 @@
 
             <flux:menu>
                 <flux:menu.radio.group>
-                    <div class="p-0 text-sm font-normal">
+                    <div class="p-0 text-sm text-red-400 font-normal">
                         <div class="flex items-center gap-2 px-1 py-1.5 text-start text-sm">
                             <flux:avatar :name="auth()->user()->name" :initials="auth()->user()->initials()" />
 

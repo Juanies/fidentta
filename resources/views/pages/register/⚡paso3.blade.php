@@ -15,7 +15,7 @@ new class extends Component {
     #[Modelable]
     public array $registro = [
         'name' => 'Cafe laté',
-                'error' => false,
+        'error' => false,
 
         'logo' => [
             'type' => 'text',
@@ -35,22 +35,27 @@ new class extends Component {
     {
         $this->registro['sellos'] = max(4, ($this->registro['sellos'] ?? 8) - 1);
     }
+
+    public function seleccionarSellos(int $cantidad): void
+    {
+        $this->registro['sellos'] = min(12, max(4, $cantidad));
+    }
 };
 
 ?>
 
 <div>
     <div class="max-w-2xl">
-        <p class="mb-3 text-sm font-semibold text-fidentta-teal">Define la experiencia</p>
-        <h2 class="text-3xl font-semibold tracking-tight text-text sm:text-5xl">¿Cuántos sellos llenan la tarjeta?</h2>
-        <p class="mt-4 text-base leading-7 text-text-secondary/70 sm:text-lg">
+        <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand">Paso 3 · Sellos y recompensa</p>
+        <h2 class="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">¿Cuántos sellos llenan la tarjeta?</h2>
+        <p class="mt-3 text-base leading-7 text-muted-foreground">
             La cantidad ideal debe ser fácil de completar, pero suficiente para crear hábito.
         </p>
     </div>
 
     <div class="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-5">
         <div class="lg:col-span-3">
-            <div class="rounded-3xl border border-white/10 bg-white/[0.03] p-5 shadow-[0_20px_50px_rgba(15,23,42,0.18)]">
+            <div class="rounded-xl border border-border bg-card p-5 shadow-sm">
                 <div class="flex items-center justify-between gap-4">
                     <div>
                         <p class="text-sm font-semibold uppercase tracking-[0.2em] text-fidentta-cyan">Nivel de
@@ -66,28 +71,27 @@ new class extends Component {
                 <div
                     class="mt-6 flex items-center justify-center gap-4 rounded-2xl border border-white/10 bg-fidentta-navy/40 p-4">
                     <button type="button" wire:click="restarSello" aria-label="Restar sello"
-                        class="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-2xl font-light text-text transition hover:border-fidentta-cyan hover:text-fidentta-cyan focus:outline-none focus:ring-2 focus:ring-fidentta-cyan/50">
+                        class="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-background text-2xl font-light text-ink transition hover:border-brand hover:text-brand focus:outline-none focus:ring-2 focus:ring-brand/40">
                         −
                     </button>
 
-                    <div class="min-w-[120px] text-center">
-                        <div class="text-5xl font-black leading-none tracking-tight text-text">
+                    <div class="min-w-30 text-center">
+                        <div class="text-5xl font-semibold leading-none text-ink">
                             {{ $registro['sellos'] ?? 8 }}
                         </div>
-                        <div class="mt-2 text-xs uppercase tracking-[0.25em] text-text-secondary/60">sellos</div>
+                        <div class="mt-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">sellos</div>
                     </div>
 
                     <button type="button" wire:click="sumarSello" aria-label="Sumar sello"
-                        class="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-2xl font-light text-text transition hover:border-fidentta-cyan hover:text-fidentta-cyan focus:outline-none focus:ring-2 focus:ring-fidentta-cyan/50">
+                        class="flex h-12 w-12 items-center justify-center rounded-lg border border-border bg-background text-2xl font-light text-ink transition hover:border-brand hover:text-brand focus:outline-none focus:ring-2 focus:ring-brand/40">
                         +
                     </button>
                 </div>
 
                 <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
                     @foreach ([4, 6, 8, 10, 12] as $preset)
-                        <button type="button"
-                            wire:click="{{ $preset === 4 ? 'restarSello' : ($preset === 12 ? 'sumarSello' : '') }}"
-                            class="rounded-xl border px-3 py-2 text-sm font-semibold transition {{ ($registro['sellos'] ?? 8) === $preset ? 'border-fidentta-cyan bg-fidentta-cyan/15 text-fidentta-cyan' : 'border-white/10 bg-white/[0.02] text-text-secondary hover:border-white/20 hover:text-text' }}">
+                        <button type="button" wire:click="seleccionarSellos({{ $preset }})"
+                            class="rounded-lg border px-3 py-2 text-sm font-semibold transition {{ ($registro['sellos'] ?? 8) === $preset ? 'border-brand bg-brand-soft text-brand' : 'border-border bg-background text-muted-foreground hover:border-brand/40 hover:text-ink' }}">
                             {{ $preset }} sellos
                         </button>
                     @endforeach
@@ -106,14 +110,14 @@ new class extends Component {
                     </p>
                 </div>
 
-                <div class="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                    <label for="recompensa" class="block text-sm font-semibold text-text">Recompensa</label>
-                    <p class="mt-1 text-xs text-text-secondary/60">Escribe una recompensa o elige una idea</p>
+                <div class="mt-6 rounded-xl border border-border bg-background p-4">
+                    <label for="recompensa" class="block text-sm font-semibold text-ink">Recompensa</label>
+                    <p class="mt-1 text-xs text-muted-foreground">Escribe una recompensa o elige una idea</p>
 
                     <div class="mt-4 flex flex-wrap gap-2">
                         @foreach ($ideasRecompensa as $idea)
                             <button type="button" wire:click="$set('registro.recompensa', '{{ $idea }}')"
-                                class="rounded-full border px-3 py-1.5 text-xs font-medium transition {{ ($registro['recompensa'] ?? 'Bebida gratis') === $idea ? 'border-fidentta-cyan bg-fidentta-cyan/15 text-fidentta-cyan' : 'border-white/10 bg-white/[0.02] text-text-secondary hover:border-white/20 hover:text-text' }}">
+                                class="rounded-full border px-3 py-1.5 text-xs font-medium transition {{ ($registro['recompensa'] ?? 'Bebida gratis') === $idea ? 'border-brand bg-brand-soft text-brand' : 'border-border bg-card text-muted-foreground hover:border-brand/40 hover:text-ink' }}">
                                 {{ $idea }}
                             </button>
                         @endforeach
@@ -121,7 +125,7 @@ new class extends Component {
 
                     <input id="recompensa" wire:model.live="registro.recompensa" type="text"
                         placeholder="Ej. Un café gratis"
-                        class="mt-4 w-full rounded-xl border border-white/15 bg-white/[0.04] px-4 py-3 text-text outline-none transition placeholder:text-text-secondary/50 focus:border-fidentta-cyan focus:bg-white/[0.1] focus:ring-2 focus:ring-fidentta-cyan/20">
+                        class="mt-4 w-full rounded-lg border border-border bg-card px-4 py-3 text-ink outline-none transition placeholder:text-muted-foreground/70 focus:border-brand focus:ring-2 focus:ring-brand/20">
                 </div>
             </div>
         </div>

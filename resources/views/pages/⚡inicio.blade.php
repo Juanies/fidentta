@@ -9,7 +9,11 @@ new class extends Component {
 
 <div class="min-h-screen  overflow-hidden bg-background text-ink  ">
     <header class="relative flex bg-glass  justify-between items-center mx-auto rounded-xl mt-8 p-4 max-w-7xl z-20 border  border-border">
+
+       <div class="flex items-center gap-4">
+         <img class="w-7 h-7" src="{{ asset('logo.png') }}" alt="Fidentta">
         <h1 class="font-bold text-xl">fidentta<span class="text-brand">.</span> </h1>
+       </div>
         <nav>
             <ul class=" flex items-center gap-4">
                 <li><a href="">Como funciona</a></li>

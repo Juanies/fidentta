@@ -9,11 +9,11 @@ new class extends Component {
         'name' => 'Cafe laté',
         'logo' => ['type' => 'text', 'content' => 'C', 'url' => null],
         'sellos' => 8,
-                'error' => false,
+        'error' => false,
 
         'recompensa' => 'Bebida gratis',
         'registro_usuarios' => [
-            'modo' => 'basico',
+            'modo' => 'normal',
             'campos' => ['email'],
         ],
     ];
@@ -27,21 +27,17 @@ new class extends Component {
 
     public string $nuevoCampo = '';
 
-    public function mount(): void
-    {
-        if (($this->registro['registro_usuarios']['modo'] ?? 'basico') === 'basico') {
-            $campos = $this->registro['registro_usuarios']['campos'] ?? [];
-            $this->registro['registro_usuarios']['campos'] = array_values(array_unique(array_merge(['email', 'password'], $campos)));
-        }
-    }
-
     public function elegirModo(string $modo): void
     {
+        if (!in_array($modo, ['none', 'normal', 'custom'], true)) {
+            return;
+        }
+
         $this->registro['registro_usuarios']['modo'] = $modo;
 
-        if ($modo === 'sin_registro') {
+        if ($modo === 'none') {
             $this->registro['registro_usuarios']['campos'] = [];
-        } elseif ($modo === 'basico') {
+        } elseif ($modo === 'normal') {
             $this->registro['registro_usuarios']['campos'] = ['email', 'password'];
         }
     }
@@ -82,10 +78,10 @@ new class extends Component {
 
 <div>
     <div class="max-w-3xl">
-        <p class="mb-3 text-sm font-semibold text-fidentta-teal">Diseña el acceso de tus clientes</p>
-        <h2 class="text-3xl font-semibold tracking-tight text-text sm:text-5xl">¿Qué datos quieres pedir?
+        <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand">Paso 4 · Registro de clientes</p>
+        <h2 class="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">¿Qué datos quieres pedir?
         </h2>
-        <p class="mt-4 text-base leading-7 text-text-secondary/70 sm:text-lg">
+        <p class="mt-3 text-base leading-7 text-muted-foreground">
             Pide solo lo necesario para que registrarse sea sencillo y tu programa pueda crecer.
         </p>
     </div>
@@ -96,13 +92,13 @@ new class extends Component {
             $camposActuales = $registro['registro_usuarios']['campos'] ?? ['email'];
         @endphp
 
-        <button type="button" wire:click="elegirModo('sin_registro')"
-            class="text-left rounded-2xl border p-6 transition hover:-translate-y-0.5 lg:col-span-2 {{ $modoActual === 'sin_registro' ? 'border-fidentta-cyan bg-fidentta-cyan/10 shadow-lg shadow-fidentta-cyan/10' : 'border-white/10 bg-white/[0.03] hover:border-white/20' }}">
+        <button type="button" wire:click="elegirModo('none')"
+            class="text-left rounded-xl border p-5 transition hover:border-brand/50 lg:col-span-2 {{ $modoActual === 'none' ? 'border-brand bg-brand-soft' : 'border-border bg-card' }}">
             <div class="flex items-start justify-between gap-4">
-                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-xl">✦
+                <div class="flex h-11 w-11 items-center justify-center rounded-lg bg-brand-soft text-xl text-brand">✦
                 </div>
                 <span
-                    class="h-5 w-5 rounded-full border-2 {{ $modoActual === 'sin_registro' ? 'border-fidentta-cyan bg-fidentta-cyan' : 'border-white/30' }}"></span>
+                    class="h-5 w-5 rounded-full border-2 {{ $modoActual === 'none' ? 'border-brand bg-brand' : 'border-border' }}"></span>
             </div>
             <h3 class="mt-5 text-lg font-semibold text-text">Ninguno: sin ventana de registro</h3>
             <p class="mt-2 max-w-2xl text-sm leading-6 text-text-secondary/70">Tus clientes empiezan al instante, sin
@@ -111,13 +107,13 @@ new class extends Component {
             </p>
         </button>
 
-        <button type="button" wire:click="elegirModo('basico')"
-            class="text-left rounded-2xl border p-6 transition hover:-translate-y-0.5 {{ $modoActual === 'basico' ? 'border-fidentta-cyan bg-fidentta-cyan/10 shadow-lg shadow-fidentta-cyan/10' : 'border-white/10 bg-white/[0.03] hover:border-white/20' }}">
+        <button type="button" wire:click="elegirModo('normal')"
+            class="text-left rounded-xl border p-5 transition hover:border-brand/50 {{ $modoActual === 'normal' ? 'border-brand bg-brand-soft' : 'border-border bg-card' }}">
             <div class="flex items-start justify-between gap-4">
-                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-xl">◎
+                <div class="flex h-11 w-11 items-center justify-center rounded-lg bg-brand-soft text-xl text-brand">◎
                 </div>
                 <span
-                    class="h-5 w-5 rounded-full border-2 {{ $modoActual === 'basico' ? 'border-fidentta-cyan bg-fidentta-cyan' : 'border-white/30' }}"></span>
+                    class="h-5 w-5 rounded-full border-2 {{ $modoActual === 'normal' ? 'border-brand bg-brand' : 'border-border' }}"></span>
             </div>
             <h3 class="mt-5 text-lg font-semibold text-text">Registro básico</h3>
             <p class="mt-2 text-sm leading-6 text-text-secondary/70">La opción sencilla: email y contraseña. El teléfono
@@ -126,13 +122,13 @@ new class extends Component {
             </p>
         </button>
 
-        <button type="button" wire:click="elegirModo('personalizado')"
-            class="text-left rounded-2xl border p-6 transition hover:-translate-y-0.5 {{ $modoActual === 'personalizado' ? 'border-fidentta-cyan bg-fidentta-cyan/10 shadow-lg shadow-fidentta-cyan/10' : 'border-white/10 bg-white/[0.03] hover:border-white/20' }}">
+        <button type="button" wire:click="elegirModo('custom')"
+            class="text-left rounded-xl border p-5 transition hover:border-brand/50 {{ $modoActual === 'custom' ? 'border-brand bg-brand-soft' : 'border-border bg-card' }}">
             <div class="flex items-start justify-between gap-4">
-                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-xl">＋
+                <div class="flex h-11 w-11 items-center justify-center rounded-lg bg-brand-soft text-xl text-brand">＋
                 </div>
                 <span
-                    class="h-5 w-5 rounded-full border-2 {{ $modoActual === 'personalizado' ? 'border-fidentta-cyan bg-fidentta-cyan' : 'border-white/30' }}"></span>
+                    class="h-5 w-5 rounded-full border-2 {{ $modoActual === 'custom' ? 'border-brand bg-brand' : 'border-border' }}"></span>
             </div>
             <h3 class="mt-5 text-lg font-semibold text-text">Personalizado</h3>
             <p class="mt-2 text-sm leading-6 text-text-secondary/70">Construye el formulario con los datos
@@ -142,8 +138,8 @@ new class extends Component {
         </button>
     </div>
 
-    @if ($modoActual === 'basico')
-        <div class="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6 lg:col-span-2">
+    @if ($modoActual === 'normal')
+        <div class="mt-4 rounded-xl border border-border bg-card p-5 sm:p-6 lg:col-span-2">
             <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <h3 class="text-lg font-semibold text-text">Registro básico</h3>
@@ -165,15 +161,15 @@ new class extends Component {
                     <span class="text-xs font-semibold text-fidentta-cyan">Obligatorio</span>
                 </div>
                 <button type="button" wire:click="alternarCampo('telefono')"
-                    class="flex items-center justify-between rounded-xl border px-4 py-3 text-left transition {{ in_array('telefono', $camposActuales, true) ? 'border-fidentta-cyan bg-fidentta-cyan/10' : 'border-white/10 bg-white/[0.02] hover:border-white/20' }}">
+                    class="flex items-center justify-between rounded-lg border px-4 py-3 text-left transition {{ in_array('telefono', $camposActuales, true) ? 'border-brand bg-brand-soft' : 'border-border bg-background hover:border-brand/40' }}">
                     <span class="text-sm font-medium text-text">Teléfono</span>
                     <span
                         class="text-xs font-semibold {{ in_array('telefono', $camposActuales, true) ? 'text-fidentta-cyan' : 'text-text-secondary/50' }}">{{ in_array('telefono', $camposActuales, true) ? 'Opcional activo' : 'Opcional' }}</span>
                 </button>
             </div>
         </div>
-    @elseif ($modoActual === 'personalizado')
-        <div class="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6 lg:col-span-2">
+    @elseif ($modoActual === 'custom')
+        <div class="mt-4 rounded-xl border border-border bg-card p-5 sm:p-6 lg:col-span-2">
             <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <h3 class="text-lg font-semibold text-text">Campos del formulario</h3>
@@ -187,10 +183,10 @@ new class extends Component {
             <div class="mt-5 grid gap-3 sm:grid-cols-2">
                 @foreach ($opcionesCampos as $campo => $etiqueta)
                     <button type="button" wire:click="alternarCampo('{{ $campo }}')"
-                        class="flex items-center justify-between rounded-xl border px-4 py-3 text-left transition {{ in_array($campo, $camposActuales, true) ? 'border-fidentta-cyan bg-fidentta-cyan/10' : 'border-white/10 bg-white/[0.02] hover:border-white/20' }}">
+                        class="flex items-center justify-between rounded-lg border px-4 py-3 text-left transition {{ in_array($campo, $camposActuales, true) ? 'border-brand bg-brand-soft' : 'border-border bg-background hover:border-brand/40' }}">
                         <span class="text-sm font-medium text-text">{{ $etiqueta }}</span>
                         <span
-                            class="flex h-5 w-5 items-center justify-center rounded border {{ in_array($campo, $camposActuales, true) ? 'border-fidentta-cyan bg-fidentta-cyan text-fidentta-navy' : 'border-white/25' }}">
+                            class="flex h-5 w-5 items-center justify-center rounded border {{ in_array($campo, $camposActuales, true) ? 'border-brand bg-brand text-white' : 'border-border' }}">
                             @if (in_array($campo, $camposActuales, true))
                                 ✓
                             @endif
@@ -207,13 +203,13 @@ new class extends Component {
             <div class="mt-5 flex flex-col gap-3 sm:flex-row">
                 <input wire:model="nuevoCampo" wire:keydown.enter="agregarCampoPersonalizado" type="text"
                     placeholder="Añade otro campo, por ejemplo: ciudad"
-                    class="min-w-0 flex-1 rounded-xl border border-white/15 bg-white/[0.04] px-4 py-3 text-sm text-text outline-none placeholder:text-text-secondary/50 focus:border-fidentta-cyan focus:ring-2 focus:ring-fidentta-cyan/20">
+                    class="min-w-0 flex-1 rounded-lg border border-border bg-background px-4 py-3 text-sm text-ink outline-none placeholder:text-muted-foreground/70 focus:border-brand focus:ring-2 focus:ring-brand/20">
                 <button type="button" wire:click="agregarCampoPersonalizado"
                     class="rounded-xl bg-fidentta-cyan px-4 py-3 text-sm font-bold text-fidentta-navy transition hover:bg-white">Añadir
                     campo</button>
             </div>
         </div>
-    @else
+    @elseif ($modoActual === 'none')
         <div class="mt-4 flex gap-3 rounded-2xl border border-fidentta-cyan/20 bg-fidentta-cyan/5 p-5 lg:col-span-2">
             <span class="text-lg text-fidentta-cyan">✓</span>
             <div>

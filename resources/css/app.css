@@ -1,51 +1,205 @@
-@import 'tailwindcss';
-@import '../../vendor/livewire/flux/dist/flux.css';
+@import "tailwindcss";
+
+@import "../../vendor/livewire/flux/dist/flux.css";
 
 @source '../views';
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
 @source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
+
 @source '../../vendor/livewire/flux/stubs/**/*.blade.php';
 
 @theme {
-  /* Azul fidelita: botones, enlaces, estados activos y sellos */
-  --color-brand: oklch(0.581 0.229 263.9);
+    --color-brand: #9ee493;
 
-  /* Azul profundo: hover, estados activos y gradientes */
-  --color-brand-700: oklch(0.488 0.214 264.2);
+    --color-brand-700: #4e7a49;
 
-  /* Azul suave: fondos de badges, chips y elementos destacados */
-  --color-brand-soft: color-mix(
-    in oklch,
-    oklch(0.581 0.229 263.9) 10%,
-    transparent
-  );
+    --color-brand-soft: color-mix(in srgb, var(--color-brand) 22%, white);
 
-  /* Ámbar: acentos, recompensas, destellos e indicadores positivos */
-  --color-accent: oklch(0.813 0.165 75);
-    --color-glass:oklch(100% 0 0 / .55);
-  /* Texto principal y elementos que requieren alto contraste */
-  --color-ink: oklch(0.257 0.026 255.8);
+    --color-accent: #fdcb61;
+    --color-accent-700: #79520a;
 
-  /* Fondo general de la aplicación, con un matiz azul muy suave */
-  --color-background: oklch(0.978 0.008 253.9);
+    --color-glass: rgb(255 247 249 / 88%);
 
-  /* Superficie de tarjetas, modales, paneles y componentes elevados */
-  --color-card: oklch(1 0 0);
+    --color-ink: #210124;
 
-  /* Texto secundario, descripciones, placeholders y metadatos */
-  --color-muted-foreground: oklch(0.5 0.03 255);
+    --color-background: #fff7f9;
 
-  /* Bordes sutiles para separar superficies y componentes */
-  --color-border: color-mix(
-    in oklch,
-    oklch(0.257 0.026 255.8) 8%,
-    transparent
-  );
+    --color-card: #ffffff;
+
+    --color-muted-foreground: #6f5c70;
+
+    --color-border: color-mix(in srgb, var(--color-ink) 13%, transparent);
+
+    --color-white: #fff7f9;
+    --color-black: #210124;
+
+    --shadow-soft: 0 2px 10px rgb(33 1 36 / 6%);
+    --shadow-card: 0 12px 32px rgb(33 1 36 / 9%);
+    --shadow-popover: 0 22px 60px rgb(33 1 36 / 16%);
+
+    --color-text: var(--color-ink);
+    --color-text-secondary: var(--color-muted-foreground);
+    --color-fidentta-cyan: var(--color-brand);
+    --color-fidentta-blue: var(--color-brand-700);
+    --color-fidentta-teal: var(--color-brand-700);
+    --color-fidentta-purple: var(--color-accent);
+    --color-fidentta-navy: var(--color-ink);
 }
 
+.bg-fidentta-gradient-soft {
+    background-image: linear-gradient(
+        135deg,
+        var(--color-card),
+        color-mix(in srgb, var(--color-brand) 18%, var(--color-background))
+    );
+}
 
-body{
-    background-color: var(--color-fidentta-navy);
-color: var(--color-text);
-  font-family: 'Bricolage Grotesque Variable', sans-serif;
+body {
+    background-color: var(--color-background);
+    color: var(--color-ink);
+    font-family: "Bricolage Grotesque Variable", sans-serif;
+    font-synthesis: none;
+}
+
+html {
+    color-scheme: light;
+}
+
+.bg-brand.text-white,
+.bg-fidentta-cyan.text-white,
+.bg-fidentta-cyan.text-fidentta-navy {
+    color: var(--color-ink);
+}
+
+.text-white\/50 {
+    color: color-mix(in srgb, var(--color-white) 50%, transparent);
+}
+.text-white\/60 {
+    color: color-mix(in srgb, var(--color-white) 60%, transparent);
+}
+.text-white\/65 {
+    color: color-mix(in srgb, var(--color-white) 65%, transparent);
+}
+.text-white\/70 {
+    color: color-mix(in srgb, var(--color-white) 70%, transparent);
+}
+.text-white\/75 {
+    color: color-mix(in srgb, var(--color-white) 75%, transparent);
+}
+.text-white\/80 {
+    color: color-mix(in srgb, var(--color-white) 80%, transparent);
+}
+.text-white\/85 {
+    color: color-mix(in srgb, var(--color-white) 85%, transparent);
+}
+
+.bg-white\/2 {
+    background-color: color-mix(
+        in oklch,
+        var(--color-brand) 2%,
+        var(--color-card)
+    );
+}
+
+.bg-white\/3,
+.bg-white\/\[0\.03\] {
+    background-color: color-mix(
+        in oklch,
+        var(--color-brand) 3%,
+        var(--color-card)
+    );
+}
+
+.bg-white\/5 {
+    background-color: color-mix(
+        in oklch,
+        var(--color-brand) 5%,
+        var(--color-card)
+    );
+}
+
+.bg-white\/10,
+.bg-white\/\[0\.1\] {
+    background-color: color-mix(
+        in oklch,
+        var(--color-brand) 10%,
+        var(--color-card)
+    );
+}
+
+.bg-white\/15,
+.bg-white\/\[0\.15\] {
+    background-color: color-mix(
+        in oklch,
+        var(--color-brand) 15%,
+        var(--color-card)
+    );
+}
+.bg-white\/20,
+.bg-white\/\[0\.2\] {
+    background-color: color-mix(
+        in oklch,
+        var(--color-brand) 20%,
+        var(--color-card)
+    );
+}
+
+.bg-white\/\[0\.02\] {
+    background-color: color-mix(
+        in oklch,
+        var(--color-brand) 2%,
+        var(--color-card)
+    );
+}
+
+.bg-white\/\[0\.04\] {
+    background-color: color-mix(
+        in oklch,
+        var(--color-brand) 4%,
+        var(--color-card)
+    );
+}
+
+.bg-white\/\[0\.06\] {
+    background-color: color-mix(
+        in oklch,
+        var(--color-brand) 6%,
+        var(--color-card)
+    );
+}
+
+.text-brand,
+.text-fidentta-cyan,
+.text-fidentta-teal {
+    color: var(--color-brand-700);
+}
+
+.text-accent,
+.text-fidentta-purple {
+    color: var(--color-accent-700);
+}
+
+.bg-brand.text-white:hover {
+    color: var(--color-white);
+}
+
+.bg-white\/4 {
+    background-color: color-mix(
+        in oklch,
+        var(--color-brand) 4%,
+        var(--color-card)
+    );
+}
+
+.border-white\/10,
+.border-white\/15 {
+    border-color: var(--color-border);
+}
+
+.border-white\/20,
+.border-white\/25,
+.border-white\/30 {
+    border-color: color-mix(in oklch, var(--color-ink) 18%, transparent);
 }

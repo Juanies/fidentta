@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
+use App\Services\TeamRegistrationService;
 
 class GoogleAuthController extends Controller
 {
@@ -18,8 +19,10 @@ class GoogleAuthController extends Controller
         return Socialite::driver('google')->redirect();
     }
 
-    public function callback(CreateTeam $createTeam): RedirectResponse
-    {
+    public function callback(
+        CreateTeam $createTeam,
+        TeamRegistrationService $teamRegistrationService
+    ): RedirectResponse {
         $googleUser = Socialite::driver('google')->user();
 
         $user = DB::transaction(function () use ($googleUser, $createTeam) {
@@ -49,7 +52,16 @@ class GoogleAuthController extends Controller
             return $user;
         });
 
+
         Auth::login($user, remember: true);
+
+        $registro = session('registro_google');
+
+        if (is_array($registro)) {
+            $teamRegistrationService->setup($user, $registro);
+            request()->session()->forget('registro_google');
+        }
+
         request()->session()->regenerate();
 
         return redirect()->route('dashboard', [

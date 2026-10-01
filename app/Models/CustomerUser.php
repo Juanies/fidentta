@@ -21,10 +21,22 @@ class CustomerUser extends Model
     {
         return $this->belongsTo(Location::class);
     }
+
+    public function cards()
+    {
+        return $this->hasMany(card::class, 'customer_id');
+    }
+
+    public function registrationValues()
+    {
+        return $this->hasMany(CustomerRegistrationValue::class);
+    }
+
     protected function casts(): array
     {
         return [
             'password' => 'hashed',
+            'guest' => 'boolean',
         ];
     }
 }

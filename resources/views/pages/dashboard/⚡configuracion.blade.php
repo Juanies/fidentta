@@ -1,132 +1,110 @@
 <?php
 
 use Livewire\Component;
-use App\Models\Team;
 
 new class extends Component {
     public $team;
+    public $design;
 
-    public function mount()
+    public function mount(): void
     {
-        $team = request()->route('current_team');
-        $this->team = $team;
+        $this->team = auth()->user()->currentTeam;
+        abort_unless($this->team !== null, 404);
+        $this->design = $this->team->cardDesign()->where('is_active', true)->first();
     }
 }; ?>
-    <div class="flex h-full w-full flex-1 flex-col gap-6 p-2 md:p-5">
-        <header
-            class="rounded-4xl border border-white/10 bg-fidentta-gradient-soft p-6 shadow-2xl shadow-fidentta-purple/10 md:p-8">
-            <p class="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-fidentta-cyan">Configuración</p>
-            <h1 class="text-3xl font-semibold tracking-tight text-text">Ajustes del negocio</h1>
-        </header>
 
-        <section class="grid gap-4 md:grid-cols-2">
-            <div class="rounded-3xl border border-white/10 bg-white/3 p-5 shadow-xl shadow-black/10">
-                <p class="text-xs uppercase tracking-[0.18em] text-fidentta-cyan">Perfil</p>
-                <div class="mt-4 space-y-4 text-sm text-text-secondary/80">
-                    <div class="rounded-2xl border border-white/10 bg-white/2 p-4">
-                        <p class="text-xs uppercase tracking-[0.14em] text-text-secondary/60">Nombre</p>
-                        <p class="mt-2 font-medium text-text">Cafe Laté</p>
-                    </div>
-                    <div class="rounded-2xl border border-white/10 bg-white/2 p-4">
-                        <p class="text-xs uppercase tracking-[0.14em] text-text-secondary/60">Email</p>
-                        <p class="mt-2 font-medium text-text">hola@cafelate.com</p>
-                    </div>
-                </div>
-            </div>
+<div class="flex h-full w-full flex-1 flex-col gap-6 p-2 md:p-5">
+    <header class="flex flex-col gap-3 border-b border-border pb-6">
+        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-brand">Configuración del negocio</p>
+        <h1 class="text-3xl font-semibold tracking-tight text-ink">Perfil y programa</h1>
+        <p class="max-w-2xl text-sm leading-6 text-muted-foreground">Consulta los datos actuales y continúa la
+            configuración desde la sección correspondiente.</p>
+    </header>
 
-            <div class="rounded-3xl border border-white/10 bg-white/3 p-5 shadow-xl shadow-black/10">
-                <p class="text-xs uppercase tracking-[0.18em] text-fidentta-cyan">Preferencias</p>
-                <div class="mt-4 space-y-3 text-sm">
-                    <div class="flex items-center justify-between rounded-2xl border border-white/10 bg-white/2 p-3.5">
-                        <span class="text-text-secondary/80">Notificaciones por email</span>
-                        <span
-                            class="rounded-full bg-fidentta-teal/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-fidentta-teal">On</span>
-                    </div>
-                    <div class="flex items-center justify-between rounded-2xl border border-white/10 bg-white/2 p-3.5">
-                        <span class="text-text-secondary/80">Membresía avanzada</span>
-                        <span
-                            class="rounded-full bg-fidentta-cyan/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-fidentta-cyan">Activa</span>
-                    </div>
-                    <div class="flex items-center justify-between rounded-2xl border border-white/10 bg-white/2 p-3.5">
-                        <span class="text-text-secondary/80">Modo oscuro</span>
-                        <span
-                            class="rounded-full bg-fidentta-purple/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-fidentta-purple">Tema</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="rounded-3xl border border-white/10 bg-white/3 p-5 shadow-xl shadow-black/10 md:p-6">
-            <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <section class="grid gap-5 lg:grid-cols-2">
+        <article class="rounded-xl border border-border bg-card p-5 sm:p-6">
+            <div class="flex items-start justify-between gap-4">
                 <div>
-                    <p class="text-xs uppercase tracking-[0.18em] text-fidentta-cyan">Conexiones TPV</p>
-                    <h2 class="mt-2 text-xl font-semibold text-text">Conecta tus ventas con Fidentta</h2>
-                    <p class="mt-2 max-w-2xl text-sm leading-6 text-text-secondary/70">
-                        Sincroniza clientes, compras y recompensas desde las herramientas que ya utilizas en tu negocio.
-                    </p>
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Perfil del equipo</p>
+                    <h2 class="mt-2 text-lg font-semibold text-ink">{{ $team->name }}</h2>
                 </div>
                 <span
-                    class="rounded-full bg-fidentta-teal/15 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-fidentta-teal">
-                    1 conexión activa
-                </span>
+                    class="rounded-lg bg-brand-soft px-3 py-2 text-xs font-semibold text-brand">{{ $team->is_active ? 'Activo' : 'Inactivo' }}</span>
             </div>
-
-            <div class="mt-6 grid gap-4 lg:grid-cols-3">
-                <div
-                    class="flex min-h-52 flex-col rounded-2xl border border-white/10 bg-white/2 p-5 transition hover:border-fidentta-cyan/40 hover:bg-white/4">
-                    <div class="flex items-start justify-between gap-4">
-                        <div
-                            class="flex h-11 w-11 items-center justify-center rounded-xl bg-[#95bf47]/15 text-xl font-black text-[#95bf47]">
-                            S</div>
-                        <span
-                            class="rounded-full bg-fidentta-teal/15 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-fidentta-teal">Conectado</span>
-                    </div>
-                    <h3 class="mt-5 text-base font-semibold text-text">Shopify</h3>
-                    <p class="mt-2 flex-1 text-sm leading-6 text-text-secondary/70">Importa pedidos y clientes de tu
-                        tienda online para activar recompensas automáticamente.</p>
-                    <button type="button"
-                        class="mt-5 w-fit text-xs font-semibold text-fidentta-cyan transition hover:text-white">Gestionar
-                        conexión <span aria-hidden="true">&rarr;</span></button>
+            <dl class="mt-5 divide-y divide-border">
+                <div class="flex items-center justify-between gap-4 py-3">
+                    <dt class="text-sm text-muted-foreground">Cuenta propietaria</dt>
+                    <dd class="truncate text-sm font-medium text-ink">{{ auth()->user()->email }}</dd>
                 </div>
-
-                <div
-                    class="flex min-h-52 flex-col rounded-2xl border border-white/10 bg-white/2 p-5 transition hover:border-fidentta-cyan/40 hover:bg-white/4">
-                    <div class="flex items-start justify-between gap-4">
-                        <div
-                            class="flex h-11 w-11 items-center justify-center rounded-xl bg-[#ff6b35]/15 text-sm font-black text-[#ff8a62]">
-                            L.app</div>
-                        <span
-                            class="rounded-full bg-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-text-secondary/70">Disponible</span>
-                    </div>
-                    <h3 class="mt-5 text-base font-semibold text-text">Last.app</h3>
-                    <p class="mt-2 flex-1 text-sm leading-6 text-text-secondary/70">Conecta tu TPV de hostelería y
-                        registra cada visita sin cambiar la forma de trabajar de tu equipo.</p>
-                    <button type="button"
-                        class="mt-5 w-fit rounded-full border border-fidentta-cyan/30 px-3 py-1.5 text-xs font-semibold text-fidentta-cyan transition hover:bg-fidentta-cyan/10">Conectar</button>
+                <div class="flex items-center justify-between gap-4 py-3">
+                    <dt class="text-sm text-muted-foreground">Locales activos</dt>
+                    <dd class="text-sm font-medium text-ink">{{ $team->locations()->where('is_active', true)->count() }}
+                    </dd>
                 </div>
-
-                <div
-                    class="flex min-h-52 flex-col rounded-2xl border border-white/10 bg-white/2 p-5 transition hover:border-fidentta-cyan/40 hover:bg-white/4">
-                    <div class="flex items-start justify-between gap-4">
-                        <div
-                            class="flex h-11 w-11 items-center justify-center rounded-xl bg-[#5b5ce2]/15 text-xl font-black text-[#8586ff]">
-                            A</div>
-                        <span
-                            class="rounded-full bg-white/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-text-secondary/70">Disponible</span>
-                    </div>
-                    <h3 class="mt-5 text-base font-semibold text-text">Agora</h3>
-                    <p class="mt-2 flex-1 text-sm leading-6 text-text-secondary/70">Lleva las ventas de tu TPV a tus
-                        métricas de fidelización y conoce mejor a tus clientes.</p>
-                    <button type="button"
-                        class="mt-5 w-fit rounded-full border border-fidentta-cyan/30 px-3 py-1.5 text-xs font-semibold text-fidentta-cyan transition hover:bg-fidentta-cyan/10">Conectar</button>
+                <div class="flex items-center justify-between gap-4 py-3">
+                    <dt class="text-sm text-muted-foreground">Registro de clientes</dt>
+                    <dd class="text-sm font-medium text-ink">
+                        {{ match ($team->customer_registration_type) {'none' => 'Sin datos','normal' => 'Email y contraseña','custom' => 'Personalizado',default => 'No configurado'} }}
+                    </dd>
                 </div>
+            </dl>
+            <a href="{{ route('profile.edit') }}" wire:navigate
+                class="mt-4 inline-flex text-sm font-semibold text-brand hover:text-brand-700">Cuenta y seguridad <span
+                    class="ml-1" aria-hidden="true">&rarr;</span></a>
+        </article>
+
+        <article class="rounded-xl border border-border bg-card p-5 sm:p-6">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Tarjeta de fidelidad</p>
+                    <h2 class="mt-2 text-lg font-semibold text-ink">
+                        {{ $design ? 'Programa configurado' : 'Programa pendiente' }}</h2>
+                </div>
+                <span class="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/20 text-accent"
+                    aria-hidden="true">&#9733;</span>
             </div>
+            @if ($design)
+                <dl class="mt-5 divide-y divide-border">
+                    <div class="flex items-center justify-between gap-4 py-3">
+                        <dt class="text-sm text-muted-foreground">Sellos para completar</dt>
+                        <dd class="text-sm font-semibold text-ink">{{ $design->stamps_required }}</dd>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 py-3">
+                        <dt class="text-sm text-muted-foreground">Recompensa</dt>
+                        <dd class="max-w-[60%] text-right text-sm font-semibold text-ink">{{ $design->reward }}</dd>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 py-3">
+                        <dt class="text-sm text-muted-foreground">Estado</dt>
+                        <dd
+                            class="text-sm font-semibold {{ $design->is_active ? 'text-green-700' : 'text-muted-foreground' }}">
+                            {{ $design->is_active ? 'Publicado' : 'Pausado' }}</dd>
+                    </div>
+                </dl>
+            @else
+                <p class="mt-4 text-sm leading-6 text-muted-foreground">Completa la configuración de sellos y recompensa
+                    para publicar tu programa.</p>
+            @endif
+            <a href="{{ route('dashboard.fidelizacion', ['current_team' => $team]) }}" wire:navigate
+                class="mt-4 inline-flex rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700">Gestionar
+                fidelización</a>
+        </article>
+    </section>
 
-            <div
-                class="mt-5 flex items-start gap-3 rounded-2xl border border-fidentta-purple/20 bg-fidentta-purple/10 p-4 text-sm text-text-secondary/80">
-                <span class="mt-0.5 text-fidentta-purple">&#9432;</span>
-                <p>Las conexiones sincronizan los datos necesarios para la fidelización. Puedes revocarlas en cualquier
-                    momento desde esta pantalla.</p>
-            </div>
-        </section>
-    </div>
+    <section class="grid gap-4 sm:grid-cols-2">
+        <a href="{{ route('dashboard.locales', ['current_team' => $team]) }}" wire:navigate
+            class="flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-5 transition hover:border-brand/40">
+            <div>
+                <p class="text-sm font-semibold text-ink">Gestionar locales</p>
+                <p class="mt-1 text-sm text-muted-foreground">Direcciones, QR y actividad por local.</p>
+            </div><span class="text-xl text-brand" aria-hidden="true">&rarr;</span>
+        </a>
+        <a href="{{ route('dashboard.clientes', ['current_team' => $team]) }}" wire:navigate
+            class="flex items-center justify-between gap-4 rounded-xl border border-border bg-card p-5 transition hover:border-brand/40">
+            <div>
+                <p class="text-sm font-semibold text-ink">Ver clientes</p>
+                <p class="mt-1 text-sm text-muted-foreground">Filtra por local y revisa el progreso.</p>
+            </div><span class="text-xl text-brand" aria-hidden="true">&rarr;</span>
+        </a>
+    </section>
+</div>

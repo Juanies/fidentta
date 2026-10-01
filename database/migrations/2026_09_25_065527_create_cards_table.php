@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('cards', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('customer_id')->constrained()->onDelete('cascade');
+            $table->foreignId('customer_id');
             $table->foreignId('team_id')->constrained()->onDelete('cascade');
             $table->foreignId('card_design_id')->constrained()->onDelete('cascade');
             $table->integer('stamps_collected')->default(0);
             $table->boolean('is_active')->default(true);
-            $table->enum('card_type', ['google', 'apple']);
+            $table->enum('card_type', ['google', 'apple'])->nullable();
             $table->timestamps();
         });
     }

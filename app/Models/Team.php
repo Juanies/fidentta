@@ -26,7 +26,7 @@ use Illuminate\Support\Carbon;
  * @property-read Collection<int, Membership> $memberships
  * @property-read Collection<int, User> $members
  */
-#[Fillable(['name', 'slug', 'is_personal', 'logo', 'is_active'])]
+#[Fillable(['name', 'slug', 'customer_registration_type', 'is_personal', 'logo', 'is_active'])]
 class Team extends Model
 {
     /** @use HasFactory<TeamFactory> */
@@ -52,19 +52,28 @@ class Team extends Model
         });
     }
 
-    public function locations(){
+    public function locations()
+    {
         return $this->hasMany(Location::class);
     }
 
-    public function customerusers(){
+    public function customerusers()
+    {
         return $this->hasMany(CustomerUser::class);
     }
 
-    public function cardDesign(){
+    public function customerRegistrationFields()
+    {
+        return $this->hasMany(CustomerRegistrationField::class);
+    }
+
+    public function cardDesign()
+    {
         return $this->hasOne(cardDesign::class);
     }
 
-    public function cards(){
+    public function cards()
+    {
         return $this->hasMany(card::class);
     }
 

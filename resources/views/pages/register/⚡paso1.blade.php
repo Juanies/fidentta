@@ -34,7 +34,7 @@ new class extends Component {
 
     protected function rules()
     {
-        return ['registro.name' => 'required|min:3|max:10'];
+        return ['registro.name' => 'required|min:3|max:60'];
     }
 
     public function updatedRegistroName(string $name)
@@ -49,11 +49,11 @@ new class extends Component {
 
 <div>
     <div class="max-w-2xl ">
-        <h2 class="text-3xl  font-semibold tracking-tight text-text sm:text-5xl">Empecemos por tu negocio
+        <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand">Paso 1 · Datos del negocio</p>
+        <h2 class="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">Empecemos por tu negocio
         </h2>
-        <p class="mt-4 text-base leading-7 text-text-secondary/70 sm:text-lg">Estos datos aparecerán en la tarjeta
+        <p class="mt-3 text-base leading-7 text-muted-foreground">Estos datos aparecerán en la tarjeta
             de tus clientes.
-        </p>
         </p>
     </div>
 
@@ -61,12 +61,13 @@ new class extends Component {
         <div class="lg:col-span-3">
             <div class="mt-8 space-y-2">
                 <label for="nombre-negocio" class="block text-sm font-semibold text-text">Nombre del negocio</label>
-                <input wire:model.live='registro.name' id="nombre-negocio" type="text"
-                    class="w-full rounded-xl border border-white/15 bg-white/[0.06] px-4 py-3 text-text outline-none transition placeholder:text-text-secondary/50 focus:border-fidentta-cyan focus:bg-white/[0.1] focus:ring-2 focus:ring-fidentta-cyan/20">
+                <input wire:model.live="registro.name" id="nombre-negocio" type="text" maxlength="60"
+                    class="w-full rounded-lg border border-border bg-background px-4 py-3 text-ink outline-none transition placeholder:text-muted-foreground/70 focus:border-brand focus:ring-2 focus:ring-brand/20">
                 @error('registro.name')
-                    <span class="block mt-1 text-sm text-red-400"> {{ $message }} </span>
+                    <span class="mt-1 block text-sm text-red-700">{{ $message }}</span>
                 @enderror
-                <span class="block text-xs text-text-secondary/60">Puedes editarlo cuando quieras.</span>
+                <span class="block text-xs text-muted-foreground">Entre 3 y 60 caracteres. Puedes editarlo
+                    después.</span>
             </div>
             <div class="mt-8 space-y-3">
                 <div>

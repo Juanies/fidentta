@@ -19,6 +19,7 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->decimal('long', 10, 7)->nullable();
             $table->decimal('lat', 10, 7)->nullable();
+            $table->uuid('qr_token')->unique();
             $table->timestamps();
         });
     }
@@ -29,5 +30,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('locations');
+
+        Schema::table('locations', function (Blueprint $table) {
+            $table->dropUnique(['qr_token']);
+            $table->dropColumn('qr_token');
+        });
     }
 };

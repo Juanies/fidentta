@@ -9,7 +9,7 @@ use Illuminate\Validation\Rule;
 use App\Models\cardDesign;
 use App\Models\CustomerUser;
 use App\Models\Location;
-
+use App\Services\TeamRegistrationService;
 new class extends Component {
     use PasswordValidationRules;
 
@@ -31,7 +31,7 @@ new class extends Component {
         ],
     ];
 
-    public function registrarse(CreateNewUser $createNewUser): mixed
+    public function registrarse(CreateNewUser $createNewUser, TeamRegistrationService $teamRegistrationService): mixed
     {
         $validated = $this->validate([
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')],
@@ -42,52 +42,31 @@ new class extends Component {
         $user = $createNewUser->create([
             'name' => $this->registro['name'] ?? 'Nuevo negocio',
             'email' => $validated['email'],
-            'logo' => $this->registro['logo'] ?? ['type' => 'text', 'content' => strtoupper(substr($this->registro['name'] ?? 'C', 0, 1)), 'url' => null],
+            'logo' => $this->registro['logo'] ?? [
+                'type' => 'text',
+                'content' => strtoupper(substr($this->registro['name'] ?? 'C', 0, 1)),
+                'url' => null,
+            ],
             'password' => $validated['password'],
             'password_confirmation' => $validated['password_confirmation'],
         ]);
 
-        Auth::login($user);
+        Auth::login($user, true);
 
         request()->session()->regenerate();
 
-        $this->guardarRegistro($user->currentTeam);
-        $this->guardarRegistroUsuario();
+        $teamRegistrationService->setup($user, $this->registro);
+
         return redirect()->route('dashboard', [
             'current_team' => $user->currentTeam?->getRouteKey(),
         ]);
     }
 
-    public function guardarRegistro($currentTeam)
+    public function google()
     {
-        $cardDesign = cardDesign::create([
-            "team_id" => $currentTeam->id,
-            "is_active" => true,
-            "color_scheme" => $this->registro['paleta'],
-            "stamps_required" => $this->registro['sellos'],
+        session()->put('registro_google', $this->registro);
 
-            "reward" => $this->registro["recompensa"]
-        ]);
-    }
-
-    public function guardarRegistroUsuario(){
-
-        // Primero crear Location que luego
-        // el usuario podra editar
-        // para crear ya las customer User
-        $location = Location::create([
-            "team_id" => Auth::user()->currentTeam->id,
-            "name" => "Ubicación principal",
-            "is_active" => true
-        ]);
-
-
-        CustomerUser::create([
-            "email" => $this->email,
-            "password" => $this->password,
-            "team_id" => Auth::user()->currentTeam->id,
-            "location_id" => $location->id
-        ]);
+        return redirect()->route('google.redirect');
     }
 };
 
@@ -97,16 +76,16 @@ new class extends Component {
     @php
         $previewBackground =
             $registro['paleta']['fondo'] ?? 'linear-gradient(135deg, #7C2D12 0%, #B45309 38%, #F59E0B 100%)';
-        $previewText = $registro['paleta']['<tex></tex>to'] ?? '#F8FAFC';
+        $previewText = $registro['paleta']['texto'] ?? '#F8FAFC';
         $logo = $registro['logo'] ?? ['type' => 'text', 'content' => 'C', 'url' => null];
         $logoInitial = strtoupper(substr($logo['content'] ?? ($registro['name'] ?? 'C'), 0, 1));
         $sellos = $registro['sellos'] ?? 8;
     @endphp
 
     <div class="max-w-3xl">
-        <p class="mb-3 text-sm font-semibold text-fidentta-teal">Tu cuenta de Fiddenta</p>
-        <h2 class="text-3xl font-semibold tracking-tight text-text sm:text-5xl">Crea tu cuenta para continuar</h2>
-        <p class="mt-4 text-base leading-7 text-text-secondary/70 sm:text-lg">Revisa la experiencia antes de publicar tu
+        <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand">Paso 5 · Tu cuenta</p>
+        <h2 class="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">Crea tu cuenta para continuar</h2>
+        <p class="mt-3 text-base leading-7 text-muted-foreground">Revisa la experiencia antes de publicar tu
             tarjeta de fidelidad.</p>
     </div>
 
@@ -168,7 +147,7 @@ new class extends Component {
                     <span class="h-px flex-1 bg-white/10"></span>
                 </div>
 
-                <a href="{{ route('google.redirect') }}"
+                <button wire:click='google'
                     class="flex w-full items-center justify-center gap-3 rounded-xl border border-white/15 bg-white/4 px-5 py-3.5 text-sm font-semibold text-text transition hover:border-white/30 hover:bg-white/8">
                     <svg class="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
                         <path fill="#4285F4"
@@ -181,7 +160,7 @@ new class extends Component {
                             d="M12 6.38c1.43 0 2.71.49 3.72 1.45l2.79-2.79C16.84 3.46 14.63 2.5 12 2.5a9.74 9.74 0 0 0-8.71 5.38l3.24 2.53C7.3 8.1 9.46 6.38 12 6.38Z" />
                     </svg>
                     Continuar con Google
-                </a>
+                </button>
 
                 <p class="mt-4 text-center text-xs leading-5 text-text-secondary/50">Al continuar aceptas las
                     condiciones de uso y la política de privacidad.</p>

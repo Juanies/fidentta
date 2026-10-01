@@ -14,7 +14,7 @@ new class extends Component {
     #[Modelable]
     public array $registro = [
         'name' => 'Cafe laté',
-                'errora' => false,
+        'errora' => false,
 
         'logo' => [
             'type' => 'text',
@@ -261,20 +261,20 @@ new class extends Component {
 
 <div>
     <div class="max-w-2xl">
-        <p class="mb-3 text-sm font-semibold text-fidentta-teal">Define la experiencia</p>
-        <h2 class="text-3xl font-semibold tracking-tight text-text sm:text-5xl">¿Qué colores lleva tu tarjeta?
+        <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand">Paso 2 · Identidad visual</p>
+        <h2 class="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">¿Qué colores lleva tu tarjeta?
         </h2>
-        <p class="mt-4 text-base leading-7 text-text-secondary/70 sm:text-lg">Se pueden ajustar después desde el panel
+        <p class="mt-3 text-base leading-7 text-muted-foreground">Se pueden ajustar después desde el panel
             cuando quieras.</p>
     </div>
 
-    <div class="mt-10   grid grid-cols-5 gap-4">
-        <div class="flex flex-col col-span-3  items-start gap-4">
+    <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-5">
+        <div class="flex flex-col items-start gap-4 lg:col-span-3">
             <div class="flex rounded-full bg-fidentta-blue/90 p-1.5 shadow-lg shadow-fidentta-blue/20">
                 <label class="relative flex-1 cursor-pointer">
                     <input type="radio" value="0" wire:model.live="isPersonalizado" class="peer sr-only" />
                     <span
-                        class="flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 peer-checked:bg-fidentta-cyan peer-checked:text-fidentta-navy peer-checked:shadow-lg peer-checked:shadow-fidentta-cyan/25 {{ !$isPersonalizado ? 'bg-fidentta-cyan text-fidentta-navy shadow-lg shadow-fidentta-cyan/25' : 'text-white/80 hover:text-white' }}">
+                        class="flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 peer-checked:bg-brand peer-checked:text-white {{ !$isPersonalizado ? 'bg-brand text-white' : 'text-muted-foreground hover:text-ink' }}">
                         Preseleccionado
                     </span>
                 </label>
@@ -282,31 +282,31 @@ new class extends Component {
                 <label class="relative flex-1 cursor-pointer">
                     <input type="radio" value="1" wire:model.live="isPersonalizado" class="peer sr-only" />
                     <span
-                        class="flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 peer-checked:bg-fidentta-cyan peer-checked:text-fidentta-navy peer-checked:shadow-lg peer-checked:shadow-fidentta-cyan/25 {{ $isPersonalizado ? 'bg-fidentta-cyan text-fidentta-navy shadow-lg shadow-fidentta-cyan/25' : 'text-white/80 hover:text-white' }}">
+                        class="flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 peer-checked:bg-brand peer-checked:text-white {{ $isPersonalizado ? 'bg-brand text-white' : 'text-muted-foreground hover:text-ink' }}">
                         Personalizado
                     </span>
                 </label>
             </div>
             @if ($isPersonalizado)
-                <div class="w-full rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div class="w-full rounded-xl border border-border bg-card p-4">
                     <p class="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-fidentta-cyan">Personaliza la
                         tarjeta</p>
                     <div class="grid gap-4 sm:grid-cols-3">
-                        <label class="block rounded-xl border border-white/10 bg-fidentta-navy/40 p-3">
+                        <label class="block rounded-lg border border-border bg-background p-3">
                             <span
                                 class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-text-secondary/70">Principal</span>
                             <input type="color" wire:model.live="colorPrincipal" value="{{ $colorPrincipal }}"
                                 class="h-12 w-full cursor-pointer rounded-lg border-0 bg-transparent p-0" />
                         </label>
 
-                        <label class="block rounded-xl border border-white/10 bg-fidentta-navy/40 p-3">
+                        <label class="block rounded-lg border border-border bg-background p-3">
                             <span
                                 class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-text-secondary/70">Secundario</span>
                             <input type="color" wire:model.live="colorSecundario" value="{{ $colorSecundario }}"
                                 class="h-12 w-full cursor-pointer rounded-lg border-0 bg-transparent p-0" />
                         </label>
 
-                        <label class="block rounded-xl border border-white/10 bg-fidentta-navy/40 p-3">
+                        <label class="block rounded-lg border border-border bg-background p-3">
                             <span
                                 class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-text-secondary/70">Texto</span>
                             <input type="color" wire:model.live="colorTexto" value="{{ $colorTexto }}"
@@ -315,11 +315,11 @@ new class extends Component {
                     </div>
                 </div>
             @else
-                <div class="grid grid-cols-3 w-full gap-4">
+                <div class="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
                     @foreach ($paletasExtras as $paleta)
                         <div wire:click="cambiarPaleta('{{ $paleta['slug'] }}')"
-                            class="h-24 flex cursor-pointer relative flex-col justify-between w-full rounded-lg p-4 {{ $paletaSeleccionada === $paleta['slug'] ? 'border-2 border-fidentta-blue' : '' }}"
-                            style="background:  {{ $paleta['colores'][0] }};">
+                            class="relative flex h-24 w-full cursor-pointer flex-col justify-between rounded-lg p-3 text-sm font-medium shadow-sm transition hover:-translate-y-0.5 sm:p-4 {{ $paletaSeleccionada === $paleta['slug'] ? 'ring-2 ring-brand ring-offset-2' : '' }}"
+                            style="background: {{ $paleta['colores'][0] }}; color: {{ $paleta['texto'] }};">
                             <div class="flex gap-2">
                                 @foreach (array_slice($paleta['colores'], 1, 2) as $color)
                                     <div class="w-2/5 h-3 rounded-full" style="background-color: {{ $color }};">
@@ -348,11 +348,11 @@ new class extends Component {
                     <span class="text-gray-400/70">o</span>
                     <hr class="flex-1 border-0 border-t border-gray-400/70">
                 </div>
-                <div class="grid grid-cols-3 w-full gap-4">
+                <div class="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
                     @foreach ($paletas as $paleta)
                         <div wire:click="cambiarPaleta('{{ $paleta['slug'] }}')"
-                            class="h-24 cursor-pointer {{ $paletaSeleccionada === $paleta['slug'] ? 'border-2 border-fidentta-blue' : '' }} flex relative flex-col justify-between w-full rounded-lg p-4"
-                            style="background: linear-gradient(135deg, {{ implode(', ', $paleta['colores']) }});">
+                            class="relative flex h-24 w-full cursor-pointer flex-col justify-between rounded-lg p-3 text-sm font-medium shadow-sm transition hover:-translate-y-0.5 sm:p-4 {{ $paletaSeleccionada === $paleta['slug'] ? 'ring-2 ring-brand ring-offset-2' : '' }}"
+                            style="background: linear-gradient(135deg, {{ implode(', ', $paleta['colores']) }}); color: {{ $paleta['texto'] }};">
                             <div class="flex gap-2">
                                 @foreach ($paleta['colores'] as $color)
                                     <div class="w-2/5 h-3 rounded-full" style="background-color: {{ $color }};">
@@ -380,7 +380,7 @@ new class extends Component {
 
             @endif
         </div>
-        <div class="col-span-2">
+        <div class="lg:col-span-2">
             @php
                 $sellosPreview = $this->registro['sellos'] ?? 8;
                 $previewBackground =
