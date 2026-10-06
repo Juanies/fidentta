@@ -47,34 +47,73 @@ new class extends Component {
         return $query;
     }
 
-    private function customersInWalletQuery()
+    private function customersWithWalletAddsQuery($start, $end)
     {
-        $latestGoogleSaves = DB::table('mobile_pass_google_events as wallet_events')
-            ->select('wallet_events.mobile_pass_id')
-            ->where('wallet_events.event_type', 'save')
-            ->whereNotExists(function ($query) {
-                $query->selectRaw('1')->from('mobile_pass_google_events as newer_events')->whereColumn('newer_events.mobile_pass_id', 'wallet_events.mobile_pass_id')->whereColumn('newer_events.received_at', '>', 'wallet_events.received_at');
+        return $this->customersQuery()->whereHas('mobilePasses', function ($passes) use ($start, $end) {
+            $passes->where(function ($platforms) use ($start, $end) {
+                $platforms
+                    ->where(function ($apple) use ($start, $end) {
+                        $apple->where('platform', 'apple')->whereHas('registrations', fn($registrations) => $registrations->whereBetween('created_at', [$start, $end]));
+                    })
+                    ->orWhere(function ($google) use ($start, $end) {
+                        $google->where('platform', 'google')->whereHas('googleEvents', fn($events) => $events->where('event_type', 'save')->whereBetween('received_at', [$start, $end]));
+                    });
             });
-
-        return $this->customersQuery()->where(function ($customers) use ($latestGoogleSaves) {
-            $customers->whereHas('mobilePasses', fn($passes) => $passes->where('platform', 'apple')->whereHas('registrations'))->orWhereHas('mobilePasses', fn($passes) => $passes->where('platform', 'google')->whereIn('id', $latestGoogleSaves));
         });
+    }
+
+    private function comparison(int|float $current, int|float $previous): array
+    {
+        if ($previous === 0.0 || $previous === 0) {
+            $change = $current === 0.0 || $current === 0 ? '0%' : 'Nuevo';
+        } else {
+            $percent = (($current - $previous) / $previous) * 100;
+            $change = sprintf('%s%.1f%%', $percent > 0 ? '+' : '', $percent);
+        }
+
+        return [
+            'value' => $current,
+            'change' => $change,
+            'direction' => $current >= $previous ? 'up' : 'down',
+        ];
     }
 
     public function getStatsProperty(): array
     {
-        $monthStart = now()->startOfMonth();
-        $monthEnd = now()->endOfMonth();
+        $currentStart = now()->startOfDay()->subDays(6);
+        $currentEnd = now()->endOfDay();
+        $previousStart = $currentStart->subDays(7);
+        $previousEnd = $currentStart->subSecond();
+
+        $currentCustomers = $this->customersQuery()
+            ->whereBetween('created_at', [$currentStart, $currentEnd])
+            ->count();
+        $previousCustomers = $this->customersQuery()
+            ->whereBetween('created_at', [$previousStart, $previousEnd])
+            ->count();
+
+        $currentStamps = (int) $this->transactionsQuery()
+            ->whereBetween('created_at', [$currentStart, $currentEnd])
+            ->sum('stamps_added');
+        $previousStamps = (int) $this->transactionsQuery()
+            ->whereBetween('created_at', [$previousStart, $previousEnd])
+            ->sum('stamps_added');
+
+        $currentWalletAdds = $this->customersWithWalletAddsQuery($currentStart, $currentEnd)->count();
+        $previousWalletAdds = $this->customersWithWalletAddsQuery($previousStart, $previousEnd)->count();
+
+        $currentVisits = $this->transactionsQuery()
+            ->whereBetween('created_at', [$currentStart, $currentEnd])
+            ->count();
+        $previousVisits = $this->transactionsQuery()
+            ->whereBetween('created_at', [$previousStart, $previousEnd])
+            ->count();
 
         return [
-            'customers' => $this->customersQuery()->count(),
-            'customers_in_wallet' => $this->customersInWalletQuery()->count(),
-            'stamps_this_month' => (int) $this->transactionsQuery()
-                ->whereBetween('created_at', [$monthStart, $monthEnd])
-                ->sum('stamps_added'),
-            'visits_this_month' => $this->transactionsQuery()
-                ->whereBetween('created_at', [$monthStart, $monthEnd])
-                ->count(),
+            'customers' => $this->comparison($currentCustomers, $previousCustomers),
+            'stamps' => $this->comparison($currentStamps, $previousStamps),
+            'wallet_adds' => $this->comparison($currentWalletAdds, $previousWalletAdds),
+            'visits' => $this->comparison($currentVisits, $previousVisits),
         ];
     }
 
@@ -155,35 +194,46 @@ new class extends Component {
         <div class="rounded-3xl border border-white/10 bg-white/3 p-5 shadow-xl shadow-black/10">
             <div class="flex items-center justify-between"><span
                     class="flex h-10 w-10 items-center justify-center rounded-2xl bg-fidentta-cyan/12 text-fidentta-cyan">&#9673;</span><span
-                    class="text-xs font-semibold text-fidentta-teal">Total</span></div>
-            <p class="mt-5 text-xs uppercase tracking-[0.16em] text-text-secondary/60">Clientes registrados</p>
-            <p class="mt-2 text-3xl font-semibold text-text">{{ number_format($this->stats['customers']) }}</p>
-            <p class="mt-1 text-xs text-text-secondary/60">en el ámbito seleccionado</p>
+                    class="text-xs font-semibold text-fidentta-teal">Últimos 7 días</span></div>
+            <p class="mt-5 text-xs uppercase tracking-[0.16em] text-text-secondary/60">Clientes nuevos</p>
+            <p class="mt-2 text-3xl font-semibold text-text">
+                {{ number_format((int) $this->stats['customers']['value']) }}</p>
+            <p
+                class="mt-1 text-xs {{ $this->stats['customers']['direction'] === 'up' ? 'text-fidentta-teal' : 'text-rose-700' }}">
+                {{ $this->stats['customers']['change'] }} vs. 7 días anteriores</p>
         </div>
         <div class="rounded-3xl border border-white/10 bg-white/3 p-5 shadow-xl shadow-black/10">
             <div class="flex items-center justify-between"><span
                     class="flex h-10 w-10 items-center justify-center rounded-2xl bg-fidentta-teal/12 text-fidentta-teal">&#10003;</span><span
-                    class="text-xs font-semibold text-fidentta-teal">Este mes</span></div>
+                    class="text-xs font-semibold text-fidentta-teal">Últimos 7 días</span></div>
             <p class="mt-5 text-xs uppercase tracking-[0.16em] text-text-secondary/60">Sellos entregados</p>
-            <p class="mt-2 text-3xl font-semibold text-text">{{ number_format($this->stats['stamps_this_month']) }}</p>
-            <p class="mt-1 text-xs text-text-secondary/60">este mes</p>
+            <p class="mt-2 text-3xl font-semibold text-text">{{ number_format((int) $this->stats['stamps']['value']) }}
+            </p>
+            <p
+                class="mt-1 text-xs {{ $this->stats['stamps']['direction'] === 'up' ? 'text-fidentta-teal' : 'text-rose-700' }}">
+                {{ $this->stats['stamps']['change'] }} vs. 7 días anteriores</p>
         </div>
         <div class="rounded-3xl border border-white/10 bg-white/3 p-5 shadow-xl shadow-black/10">
             <div class="flex items-center justify-between"><span
                     class="flex h-10 w-10 items-center justify-center rounded-2xl bg-fidentta-purple/12 text-fidentta-purple">&#9733;</span><span
-                    class="text-xs font-semibold text-fidentta-purple">Instaladas</span></div>
-            <p class="mt-5 text-xs uppercase tracking-[0.16em] text-text-secondary/60">Clientes con pase en Wallet</p>
-            <p class="mt-2 text-3xl font-semibold text-text">{{ number_format($this->stats['customers_in_wallet']) }}
-            </p>
-            <p class="mt-1 text-xs text-text-secondary/60">Apple Wallet o Google Wallet</p>
+                    class="text-xs font-semibold text-fidentta-purple">Últimos 7 días</span></div>
+            <p class="mt-5 text-xs uppercase tracking-[0.16em] text-text-secondary/60">Pases añadidos a Wallet</p>
+            <p class="mt-2 text-3xl font-semibold text-text">
+                {{ number_format((int) $this->stats['wallet_adds']['value']) }}</p>
+            <p
+                class="mt-1 text-xs {{ $this->stats['wallet_adds']['direction'] === 'up' ? 'text-fidentta-teal' : 'text-rose-700' }}">
+                {{ $this->stats['wallet_adds']['change'] }} vs. 7 días anteriores</p>
         </div>
         <div class="rounded-3xl border border-white/10 bg-white/3 p-5 shadow-xl shadow-black/10">
             <div class="flex items-center justify-between"><span
                     class="flex h-10 w-10 items-center justify-center rounded-2xl bg-fidentta-blue/12 text-fidentta-blue">&#8599;</span><span
-                    class="text-xs font-semibold text-fidentta-cyan">Este mes</span></div>
+                    class="text-xs font-semibold text-fidentta-cyan">Últimos 7 días</span></div>
             <p class="mt-5 text-xs uppercase tracking-[0.16em] text-text-secondary/60">Visitas registradas</p>
-            <p class="mt-2 text-3xl font-semibold text-text">{{ number_format($this->stats['visits_this_month']) }}</p>
-            <p class="mt-1 text-xs text-text-secondary/60">operaciones con sellos</p>
+            <p class="mt-2 text-3xl font-semibold text-text">{{ number_format((int) $this->stats['visits']['value']) }}
+            </p>
+            <p
+                class="mt-1 text-xs {{ $this->stats['visits']['direction'] === 'up' ? 'text-fidentta-teal' : 'text-rose-700' }}">
+                {{ $this->stats['visits']['change'] }} vs. 7 días anteriores</p>
         </div>
     </section>
 

@@ -231,8 +231,8 @@ class Card extends Controller
         $certificate = config('mobile-pass.apple.certificate');
         $certificatePath = config('mobile-pass.apple.certificate_path');
         $hasCertificate = filled($certificate) || (filled($certificatePath) && is_file($certificatePath));
-
-        if (! $hasCertificate || ! filled(config('mobile-pass.apple.type_identifier')) || ! filled(config('mobile-pass.apple.team_identifier')) || $this->appleWalletNeedsPublicHttps()) {
+        // || $this->appleWalletNeedsPublicHttps()
+        if (! $hasCertificate || ! filled(config('mobile-pass.apple.type_identifier')) || ! filled(config('mobile-pass.apple.team_identifier'))) {
             return null;
         }
 
