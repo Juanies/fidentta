@@ -77,7 +77,6 @@ class Team extends Model
         return $this->hasMany(card::class);
     }
 
-
     /**
      * Get the team owner.
      */

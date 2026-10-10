@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\LaravelMobilePass\Models\Concerns\HasMobilePasses;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
 
 #[Fillable(['email', 'password', 'team_id', 'location_id', 'guest'])]
 class CustomerUser extends Model
@@ -17,9 +17,6 @@ class CustomerUser extends Model
     {
         return $this->belongsTo(Team::class);
     }
-
-
-
 
     public function location()
     {

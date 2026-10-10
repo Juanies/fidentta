@@ -1,15 +1,13 @@
 <?php
 
-use App\Http\Middleware\EnsureTeamMembership;
-use App\Http\Controllers\GoogleAuthController;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
-use App\Http\Middleware\Subscribed;
-use App\Http\Middleware\isRegistered as IsRegistered;
 use App\Http\Controllers\Card;
+use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\SubscriptionSuccess;
-
-
+use App\Http\Middleware\EnsureTeamMembership;
+use App\Http\Middleware\isRegistered as IsRegistered;
+use App\Http\Middleware\Subscribed;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 
 Route::livewire('/', 'pages::inicio')->name('home');
 Route::livewire('/register', 'pages::register')->name('register')->middleware(IsRegistered::class);
@@ -49,10 +47,9 @@ Route::prefix('{current_team}')
         Route::livewire('dashboard/locales/{id}', 'pages::dashboard.location.show')->name('locations.index');
     });
 
-
 Route::get('/subscription/success', [
     SubscriptionSuccess::class,
-    'success'
+    'success',
 ])->middleware('auth')->name('subscription.success');
 
 Route::get('/subscription-checkout', function (Request $request) {
@@ -66,8 +63,6 @@ Route::get('/subscription-checkout', function (Request $request) {
         ]);
 })->middleware(['auth', IsRegistered::class])->name('subscription-checkout');
 
-
 Route::mobilePass();
 
-
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

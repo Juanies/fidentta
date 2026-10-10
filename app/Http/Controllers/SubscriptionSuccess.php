@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Location;
-use Illuminate\Support\Facades\Auth;
-
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class SubscriptionSuccess extends Controller
 {
@@ -18,7 +17,6 @@ class SubscriptionSuccess extends Controller
             'current_team' => $user->currentTeam?->getRouteKey(),
         ]);
     }
-
 
     public function guardarLocationInicial()
     {

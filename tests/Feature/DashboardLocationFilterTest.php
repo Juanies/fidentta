@@ -1,10 +1,10 @@
 <?php
 
 use App\Actions\Teams\CreateTeam;
+use App\Models\card as LoyaltyCard;
 use App\Models\CustomerUser;
 use App\Models\Location;
 use App\Models\User;
-use App\Models\card as LoyaltyCard;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Spatie\LaravelMobilePass\Enums\PassType;
@@ -341,11 +341,11 @@ test('dashboard compares all four metric totals across consecutive seven-day per
 
     foreach ([[$cards[0], now()->subDay(), 'current'], [$cards[2], now()->subDays(8), 'previous']] as [$card, $savedAt, $suffix]) {
         $pass = $card->customer->mobilePasses()->create([
-            'pass_serial' => 'wallet-' . $suffix . '-' . $card->id,
+            'pass_serial' => 'wallet-'.$suffix.'-'.$card->id,
             'type' => PassType::StoreCard->value,
             'platform' => Platform::Google->value,
             'builder_name' => 'loyalty_pass',
-            'content' => ['googleClassType' => 'loyaltyClass', 'googleObjectId' => 'issuer.' . $suffix],
+            'content' => ['googleClassType' => 'loyaltyClass', 'googleObjectId' => 'issuer.'.$suffix],
             'images' => [],
         ]);
         $pass->googleEvents()->create([

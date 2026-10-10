@@ -6,8 +6,6 @@ use App\Models\card as LoyaltyCard;
 use App\Models\Team;
 use Illuminate\Support\Facades\Log;
 use Intervention\Image\Drivers\Imagick\Driver as ImagickDriver;
-use Intervention\Image\Geometry\Circle;
-use Intervention\Image\Geometry\Point;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
 use Intervention\Image\Interfaces\ImageManagerInterface;
@@ -49,63 +47,59 @@ class StampCardArtwork
             return null;
         }
 
-        $required = max(1, min(20, (int) $design->stamps_required));
+        $required = max(1, min(12, (int) $design->stamps_required));
         $collected = min(max(0, (int) $card->stamps_collected), $required);
         $scheme = $design->color_scheme ?? [];
         $fillColor = $this->hexColor($scheme['colorPrincipal'] ?? '#9EE493', '#9EE493');
         $iconColor = $this->hexColor($scheme['texto'] ?? '#210124', '#210124');
-        $image = $manager->createImage(720, 150);
-
-        $usableWidth = 660;
-        $cellWidth = $usableWidth / $required;
-        $diameter = max(20, min(72, (int) floor($cellWidth * 0.68)));
-        $radius = $diameter / 2;
-        $centerY = 75;
         $selectedIcon = $design->stamp_icon ?? 'star';
         $customIconPath = $design->stamp_icon_path
-            ? storage_path('app/public/' . $design->stamp_icon_path)
+            ? storage_path('app/public/'.$design->stamp_icon_path)
             : null;
+        $artwork = $this->artworkDataUri($customIconPath);
+        $svg = self::buildStampStripSvg($required, $collected, $fillColor, $iconColor, $selectedIcon, $artwork);
+
+        $image = $manager->decodeDataUri('data:image/svg+xml;base64,'.base64_encode($svg));
+
+        return $this->writeImage($image, 'stamp-card-'.$card->id.'.png');
+    }
+
+    public static function buildStampStripSvg(
+        int $required,
+        int $collected,
+        string $fillColor,
+        string $iconColor,
+        string $icon = 'star',
+        ?string $artworkDataUri = null,
+    ): string {
+        $required = max(1, min(12, $required));
+        $collected = min(max(0, $collected), $required);
+        $rows = (int) ceil($required / 4);
+        $height = $rows * 120;
+        $fillColor = self::validHexColor($fillColor, '#9EE493');
+        $iconColor = self::validHexColor($iconColor, '#210124');
+        $iconDataUri = 'data:image/svg+xml;base64,'.base64_encode(self::iconSvg($icon, $iconColor, 100));
+        $source = $artworkDataUri ?? $iconDataUri;
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="375" height="'.($height / 2).'" viewBox="0 0 750 '.$height.'">';
 
         for ($index = 0; $index < $required; $index++) {
-            $centerX = 30 + ($index + 0.5) * $cellWidth;
+            $column = $index % 4;
+            $row = intdiv($index, 4);
+            $centerX = 93.75 + ($column * 187.5);
+            $centerY = 60 + ($row * 120);
+            $radius = 51;
+            $diameter = $radius * 2;
             $filled = $index < $collected;
-            $circle = new Circle($diameter, new Point((int) round($centerX), $centerY));
-            $circle->setBackgroundColor($filled ? $fillColor : 'rgba(255,247,249,0.82)');
-            $circle->setBorder($fillColor, 4);
-            $image->drawCircle($circle);
-
-            $iconSize = (int) ($diameter * 0.5);
-            $icon = $this->makeIcon($selectedIcon, $customIconPath, $iconColor, $iconSize, $manager);
-
-            if ($icon) {
-                $image->insert(
-                    $icon,
-                    (int) round($centerX - ($icon->width() / 2)),
-                    (int) round($centerY - ($icon->height() / 2)),
-                );
-            }
+            $opacity = $filled ? '1' : '0.22';
+            $svg .= '<defs><clipPath id="stamp-'.$index.'"><circle cx="'.$centerX.'" cy="'.$centerY.'" r="'.$radius.'"/></clipPath></defs>';
+            $svg .= '<circle cx="'.$centerX.'" cy="'.$centerY.'" r="'.$radius.'" fill="'.$fillColor.'" fill-opacity="'.($filled ? '1' : '0.12').'" stroke="'.$fillColor.'" stroke-opacity="'.($filled ? '1' : '0.55').'" stroke-width="5"/>';
+            $svg .= '<image href="'.$source.'" x="'.($centerX - $radius).'" y="'.($centerY - $radius).'" width="'.$diameter.'" height="'.$diameter.'" preserveAspectRatio="xMidYMid slice" clip-path="url(#stamp-'.$index.')" opacity="'.$opacity.'"/>';
         }
 
-        return $this->writeImage($image, 'stamp-card-' . $card->id . '.png');
+        return $svg.'</svg>';
     }
 
-    private function makeIcon(
-        string $key,
-        ?string $customPath,
-        string $color,
-        int $size,
-        ImageManagerInterface $manager,
-    ): ?ImageInterface {
-        if ($key === 'custom' && $customPath && is_file($customPath)) {
-            return $manager->decodePath($customPath)->scaleDown($size, $size);
-        }
-
-        $svg = 'data:image/svg+xml;base64,' . base64_encode($this->iconSvg($key, $color, $size));
-
-        return $manager->decodeDataUri($svg)->scaleDown($size, $size);
-    }
-
-    private function iconSvg(string $key, string $color, int $size): string
+    private static function iconSvg(string $key, string $color, int $size): string
     {
         $symbol = match ($key) {
             'heart' => '<path d="M20.8 8.7c0 5.2-8.8 11-8.8 11S3.2 13.9 3.2 8.7a4.7 4.7 0 0 1 8.8-2.3 4.7 4.7 0 0 1 8.8 2.3Z"/>',
@@ -114,7 +108,71 @@ class StampCardArtwork
             default => '<path d="m12 2.8 2.8 5.7 6.3.9-4.6 4.5 1.1 6.3-5.6-3-5.6 3 1.1-6.3-4.6-4.5 6.3-.9L12 2.8Z"/>',
         };
 
-        return '<svg xmlns="http://www.w3.org/2000/svg" width="' . $size . '" height="' . $size . '" viewBox="0 0 24 24" fill="none" stroke="' . $color . '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' . $symbol . '</svg>';
+        return '<svg xmlns="http://www.w3.org/2000/svg" width="'.$size.'" height="'.$size.'" viewBox="0 0 24 24" fill="none" stroke="'.$color.'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'.$symbol.'</svg>';
+    }
+
+    private function artworkDataUri(?string $path): ?string
+    {
+        if (! $path || ! is_file($path) || filesize($path) > 2 * 1024 * 1024) {
+            return null;
+        }
+
+        $contents = file_get_contents($path);
+
+        if ($contents === false) {
+            return null;
+        }
+
+        $mime = match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
+            'svg' => 'image/svg+xml',
+            'jpg', 'jpeg' => 'image/jpeg',
+            'webp' => 'image/webp',
+            default => 'image/png',
+        };
+
+        if ($mime === 'image/svg+xml' && ! self::isSafeSvg($contents)) {
+            return null;
+        }
+
+        return 'data:'.$mime.';base64,'.base64_encode($contents);
+    }
+
+    private static function isSafeSvg(string $svg): bool
+    {
+        if (stripos($svg, '<!DOCTYPE') !== false || stripos($svg, '<!ENTITY') !== false) {
+            return false;
+        }
+
+        $document = new \DOMDocument;
+
+        if (! $document->loadXML($svg, LIBXML_NONET | LIBXML_NOBLANKS) || $document->documentElement?->localName !== 'svg') {
+            return false;
+        }
+
+        foreach ($document->getElementsByTagName('*') as $element) {
+            if (in_array(strtolower($element->localName), ['script', 'foreignobject', 'iframe', 'object', 'embed'], true)) {
+                return false;
+            }
+
+            foreach ($element->attributes as $attribute) {
+                $name = strtolower($attribute->name);
+                $value = trim($attribute->value);
+
+                if (str_starts_with($name, 'on')) {
+                    return false;
+                }
+
+                if (in_array($name, ['href', 'xlink:href'], true) && $value !== '' && ! str_starts_with($value, '#')) {
+                    return false;
+                }
+
+                if (preg_match('/url\(\s*["\']?(?!#)/i', $value)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     private function makeTeamLogo(Team $team, ImageManagerInterface $manager): ?string
@@ -132,7 +190,7 @@ class StampCardArtwork
                 : '';
         }
 
-        $sourcePath = storage_path('app/public/' . ltrim($logoPath, '/'));
+        $sourcePath = storage_path('app/public/'.ltrim($logoPath, '/'));
 
         if (! is_file($sourcePath)) {
             return null;
@@ -146,7 +204,7 @@ class StampCardArtwork
             (int) round((180 - $source->height()) / 2),
         );
 
-        return $this->writeImage($canvas, 'team-logo-' . $team->id . '.png');
+        return $this->writeImage($canvas, 'team-logo-'.$team->id.'.png');
     }
 
     private function writeImage(ImageInterface $image, string $fileName): string
@@ -157,7 +215,7 @@ class StampCardArtwork
             mkdir($directory, 0750, true);
         }
 
-        $path = $directory . DIRECTORY_SEPARATOR . $fileName;
+        $path = $directory.DIRECTORY_SEPARATOR.$fileName;
         $image->save($path);
 
         return $path;
@@ -165,8 +223,11 @@ class StampCardArtwork
 
     private function hexColor(mixed $color, string $fallback): string
     {
-        return is_string($color) && preg_match('/^#[0-9A-Fa-f]{6}$/', $color)
-            ? $color
-            : $fallback;
+        return self::validHexColor($color, $fallback);
+    }
+
+    private static function validHexColor(mixed $color, string $fallback): string
+    {
+        return is_string($color) && preg_match('/^#[0-9A-Fa-f]{6}$/', $color) ? $color : $fallback;
     }
 }

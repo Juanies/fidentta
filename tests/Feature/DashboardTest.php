@@ -24,7 +24,7 @@ test('subscribed users can visit the dashboard', function () {
     $user = User::factory()->create();
     $user->subscriptions()->create([
         'type' => 'fidentta',
-        'stripe_id' => 'sub_test_' . uniqid(),
+        'stripe_id' => 'sub_test_'.uniqid(),
         'stripe_status' => 'active',
     ]);
 

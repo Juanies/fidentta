@@ -48,12 +48,12 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
-        Fortify::loginView(fn(Request $request) => view('pages::auth.login', [
+        Fortify::loginView(fn (Request $request) => view('pages::auth.login', [
             'teamInvitation' => $this->teamInvitation($request),
         ]));
-        Fortify::confirmPasswordView(fn() => view('pages::auth.confirm-password'));
-        Fortify::resetPasswordView(fn() => view('pages::auth.reset-password'));
-        Fortify::requestPasswordResetLinkView(fn() => view('pages::auth.forgot-password'));
+        Fortify::confirmPasswordView(fn () => view('pages::auth.confirm-password'));
+        Fortify::resetPasswordView(fn () => view('pages::auth.reset-password'));
+        Fortify::requestPasswordResetLinkView(fn () => view('pages::auth.forgot-password'));
     }
 
     /**
@@ -63,7 +63,7 @@ class FortifyServiceProvider extends ServiceProvider
     {
 
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())) . '|' . $request->ip());
+            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
 
             return Limit::perMinute(5)->by($throttleKey);
         });
@@ -86,7 +86,7 @@ class FortifyServiceProvider extends ServiceProvider
             ->with('team')
             ->where('code', $invitationCode)
             ->whereNull('accepted_at')
-            ->where(fn($query) => $query
+            ->where(fn ($query) => $query
                 ->whereNull('expires_at')
                 ->orWhere('expires_at', '>=', now()))
             ->first();

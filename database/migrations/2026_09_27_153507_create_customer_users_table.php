@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('password')->nullable();
             $table->foreignId('team_id')->constrained()->onDelete('cascade');
             $table->foreignId('location_id')->constrained()->onDelete('cascade');
-            $table->boolean("guest");
+            $table->boolean('guest');
             $table->timestamps();
         });
     }

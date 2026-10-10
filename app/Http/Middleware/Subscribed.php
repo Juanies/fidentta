@@ -13,10 +13,10 @@ class Subscribed
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!$request->user()?->subscribed('fidentta')) {
+        if (! $request->user()?->subscribed('fidentta')) {
             return redirect()->route('subscription-checkout');
         }
 
         return $next($request);  // ✅ Continúa si está pagado
     }
-    }
+}

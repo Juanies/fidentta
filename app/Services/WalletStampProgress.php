@@ -59,7 +59,7 @@ class WalletStampProgress
                 $payload = $content['googleObjectPayload'];
                 $payload['loyaltyPoints']['balance']['string'] = $balance;
                 $modules = collect($payload['textModulesData'] ?? [])
-                    ->reject(fn(array $module) => ($module['id'] ?? null) === 'stamp_progress')
+                    ->reject(fn (array $module) => ($module['id'] ?? null) === 'stamp_progress')
                     ->values();
                 $modules->push([
                     'header' => 'Progreso',

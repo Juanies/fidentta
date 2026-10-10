@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('locations', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->foreignId("team_id")->constrained()->onDelete('cascade');
+            $table->foreignId('team_id')->constrained()->onDelete('cascade');
             $table->string('address')->nullable();
             $table->boolean('is_active')->default(true);
             $table->decimal('long', 10, 7)->nullable();

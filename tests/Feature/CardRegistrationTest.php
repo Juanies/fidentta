@@ -1,12 +1,12 @@
 <?php
 
+use App\Models\card;
+use App\Models\cardDesign;
 use App\Models\CustomerRegistrationField;
 use App\Models\CustomerRegistrationValue;
+use App\Models\CustomerUser;
 use App\Models\Location;
 use App\Models\Team;
-use App\Models\cardDesign;
-use App\Models\CustomerUser;
-use App\Models\card;
 
 function createRegistrationLocation(string $mode): Location
 {

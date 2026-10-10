@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\Location;
-use App\Models\cardDesign as CardDesign;
-use App\Models\User;
 use App\Actions\Teams\CreateTeam;
+use App\Models\cardDesign as CardDesign;
+use App\Models\Location;
+use App\Models\User;
 use App\Services\TeamRegistrationService;
 use Illuminate\Support\Facades\Hash;
 

@@ -55,7 +55,6 @@ return [
     // Posted by KirtJ
     // Retrieved 2026-09-19, License - CC BY-SA 4.0
 
-
     'url' => env('APP_URL', 'http://localhost'),
 
     /*

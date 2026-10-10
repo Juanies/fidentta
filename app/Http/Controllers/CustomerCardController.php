@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CustomerCard;
 use App\Http\Requests\StoreCustomerCardRequest;
 use App\Http\Requests\UpdateCustomerCardRequest;
+use App\Models\CustomerCard;
 
 class CustomerCardController extends Controller
 {

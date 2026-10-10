@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\card as LoyaltyCard;
 use App\Models\CardTransaction;
 use App\Models\Location;
 use App\Models\User;
-use App\Models\card as LoyaltyCard;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;

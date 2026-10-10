@@ -23,7 +23,6 @@ class isRegistered
                 : redirect()->route('register');
         }
 
-
         return $next($request);
     }
 }

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CardTransaction;
 use App\Http\Requests\StoreCardTransactionRequest;
 use App\Http\Requests\UpdateCardTransactionRequest;
+use App\Models\CardTransaction;
 
 class CardTransactionController extends Controller
 {

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AuditLog;
 use App\Http\Requests\StoreAuditLogRequest;
 use App\Http\Requests\UpdateAuditLogRequest;
+use App\Models\AuditLog;
 
 class AuditLogController extends Controller
 {

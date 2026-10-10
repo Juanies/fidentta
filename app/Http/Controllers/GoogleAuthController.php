@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Actions\Teams\CreateTeam;
 use App\Models\User;
+use App\Services\TeamRegistrationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
-use App\Services\TeamRegistrationService;
 
 class GoogleAuthController extends Controller
 {
@@ -40,7 +40,7 @@ class GoogleAuthController extends Controller
                     'google_refresh_token' => $googleUser->refreshToken ?? null,
                 ]);
 
-                $createTeam->handle($user, $user->name . "'s Team", isPersonal: false);
+                $createTeam->handle($user, $user->name."'s Team", isPersonal: false);
             } else {
                 $user->update([
                     'google_id' => $googleUser->getId(),
@@ -51,7 +51,6 @@ class GoogleAuthController extends Controller
 
             return $user;
         });
-
 
         Auth::login($user, remember: true);
 

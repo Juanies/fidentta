@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Location;
 use App\Http\Requests\StoreLocationRequest;
 use App\Http\Requests\UpdateLocationRequest;
+use App\Models\Location;
 
 class LocationController extends Controller
 {

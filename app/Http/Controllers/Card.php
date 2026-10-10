@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\card as LoyaltyCard;
 use App\Models\CustomerUser;
 use App\Models\Location;
 use App\Models\Team;
-use App\Models\card as LoyaltyCard;
 use App\Services\WalletStampProgress;
 use BaconQrCode\Common\ErrorCorrectionLevel;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
@@ -15,8 +15,8 @@ use BaconQrCode\Writer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Spatie\LaravelMobilePass\Builders\Apple\StoreCardPassBuilder;
 use Spatie\LaravelMobilePass\Builders\Google\LoyaltyPassBuilder;
 use Spatie\LaravelMobilePass\Builders\Google\LoyaltyPassClass;
@@ -29,7 +29,7 @@ class Card extends Controller
     public function index(string $qr_token)
     {
         $location = Location::where('qr_token', $qr_token)
-            ->with(['team.customerRegistrationFields' => fn($query) => $query
+            ->with(['team.customerRegistrationFields' => fn ($query) => $query
                 ->where('is_active', true)
                 ->orderBy('sort_order')])
             ->firstOrFail();
@@ -51,13 +51,12 @@ class Card extends Controller
     {
 
         $location = Location::where('qr_token', $qr_token)
-            ->with(['businessPageLinks', 'team.customerRegistrationFields' => fn($query) => $query
+            ->with(['businessPageLinks', 'team.customerRegistrationFields' => fn ($query) => $query
                 ->where('is_active', true)
                 ->orderBy('sort_order')])
             ->firstOrFail();
 
         $team = $location->team;
-
 
         abort_unless($location->is_active, 404);
 
@@ -72,7 +71,7 @@ class Card extends Controller
     public function store(Request $request, string $qr_token)
     {
         $location = Location::where('qr_token', $qr_token)
-            ->with(['team.customerRegistrationFields' => fn($query) => $query
+            ->with(['team.customerRegistrationFields' => fn ($query) => $query
                 ->where('is_active', true)
                 ->orderBy('sort_order')])
             ->firstOrFail();
@@ -213,14 +212,14 @@ class Card extends Controller
 
         $renderer = new ImageRenderer(
             new RendererStyle(300),
-            new SvgImageBackEnd()
+            new SvgImageBackEnd
         );
 
         $writer = new Writer($renderer);
 
         $qr = $writer->writeString($url, ecLevel: ErrorCorrectionLevel::H());
 
-        $document = new \DOMDocument();
+        $document = new \DOMDocument;
         $document->loadXML($qr);
 
         $svg = $document->documentElement;
@@ -241,7 +240,7 @@ class Card extends Controller
         $logo->setAttribute('preserveAspectRatio', 'xMidYMid meet');
         $logo->setAttribute(
             'href',
-            'data:image/png;base64,' . base64_encode(file_get_contents(public_path('logo.png')))
+            'data:image/png;base64,'.base64_encode(file_get_contents(public_path('logo.png')))
         );
         $svg->appendChild($logo);
 
@@ -307,7 +306,7 @@ class Card extends Controller
                     $builder->setLogoImage($iconPath);
                 }
 
-                $builder->updateField('stamps', $card->stamps_collected . '/' . $requiredStamps)
+                $builder->updateField('stamps', $card->stamps_collected.'/'.$requiredStamps)
                     ->updateField('progress', $progress)
                     ->save();
                 $existingPass->refresh();
@@ -318,9 +317,9 @@ class Card extends Controller
 
             $passBuilder = StoreCardPassBuilder::make()
                 ->setOrganizationName(config('mobile-pass.apple.organization_name') ?: $card->team->name)
-                ->setSerialNumber('card-' . $card->id)
-                ->setDownloadName(Str::slug($card->team->name) . '-tarjeta')
-                ->setDescription('Tarjeta de fidelidad de ' . $card->team->name)
+                ->setSerialNumber('card-'.$card->id)
+                ->setDownloadName(Str::slug($card->team->name).'-tarjeta')
+                ->setDescription('Tarjeta de fidelidad de '.$card->team->name)
                 ->setLogoText(Str::limit($card->team->name, 20, ''))
                 ->setIconImage(storage_path('app/private/passgenerator/assets/icon.png'));
 
@@ -331,8 +330,8 @@ class Card extends Controller
             $pass = $passBuilder
                 ->setBackgroundColor($backgroundColor)
                 ->setForegroundColor('#FFFFFF')
-                ->setBarcode(BarcodeType::Qr, 'FIDELIDAD-CARD-' . $card->id, (string) $card->id)
-                ->addField('stamps', $card->stamps_collected . '/' . $requiredStamps, label: 'Sellos')
+                ->setBarcode(BarcodeType::Qr, 'FIDELIDAD-CARD-'.$card->id, (string) $card->id)
+                ->addField('stamps', $card->stamps_collected.'/'.$requiredStamps, label: 'Sellos')
                 ->addSecondaryField('progress', $progress, label: 'Progreso')
                 ->addSecondaryField('reward', (string) $design?->reward, label: 'Recompensa')
                 ->save();
@@ -362,7 +361,7 @@ class Card extends Controller
         $relative = str_starts_with($path, '/storage/')
             ? substr($path, strlen('/storage/'))
             : $team->logo;
-        $absolute = storage_path('app/public/' . ltrim($relative, '/'));
+        $absolute = storage_path('app/public/'.ltrim($relative, '/'));
 
         return is_file($absolute) ? $absolute : null;
     }
@@ -420,7 +419,7 @@ class Card extends Controller
                 $color = '#2563EB';
             }
 
-            $classSuffix = 'fidentta_team_' . $team->id;
+            $classSuffix = 'fidentta_team_'.$team->id;
             $passClass = LoyaltyPassClass::find($classSuffix) ?? LoyaltyPassClass::make($classSuffix)
                 ->setIssuerName($team->name)
                 ->setProgramName($team->name)
@@ -435,10 +434,10 @@ class Card extends Controller
 
             $pass = LoyaltyPassBuilder::make()
                 ->setClass($classSuffix)
-                ->setObjectSuffix('card_' . $card->id)
+                ->setObjectSuffix('card_'.$card->id)
                 ->setAccountId((string) $card->id)
-                ->setAccountName($customer->email ?: 'Cliente ' . $customer->id)
-                ->setBalanceString($card->stamps_collected . '/' . $requiredStamps)
+                ->setAccountName($customer->email ?: 'Cliente '.$customer->id)
+                ->setBalanceString($card->stamps_collected.'/'.$requiredStamps)
                 ->setBalanceLabel('Sellos')
                 ->addTextModule('Progreso', $progress, 'stamp_progress')
                 ->setBarcode(BarcodeType::Qr, route('wallet.card', ['qr_token' => $customer->location->qr_token]))

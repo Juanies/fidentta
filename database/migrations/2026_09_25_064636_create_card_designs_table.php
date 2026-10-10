@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('card_designs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId("team_id")->constrained()->onDelete('cascade');
+            $table->foreignId('team_id')->constrained()->onDelete('cascade');
             $table->boolean('is_active')->default(true);
             $table->json('color_scheme');
             $table->integer('stamps_required');
