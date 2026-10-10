@@ -54,14 +54,14 @@ class StampCardArtwork
         $iconColor = $this->hexColor($scheme['texto'] ?? '#210124', '#210124');
         $selectedIcon = $design->stamp_icon ?? 'star';
         $customIconPath = $design->stamp_icon_path
-            ? storage_path('app/public/' . $design->stamp_icon_path)
+            ? storage_path('app/public/'.$design->stamp_icon_path)
             : null;
         $artwork = $this->artworkDataUri($customIconPath);
         $svg = self::buildStampStripSvg($required, $collected, $fillColor, $iconColor, $selectedIcon, $artwork);
 
-        $image = $manager->decodeDataUri('data:image/svg+xml;base64,' . base64_encode($svg));
+        $image = $manager->decodeDataUri('data:image/svg+xml;base64,'.base64_encode($svg));
 
-        return $this->writeImage($image, 'stamp-card-' . $card->id . '.png');
+        return $this->writeImage($image, 'stamp-card-'.$card->id.'.png');
     }
 
     public static function buildStampStripSvg(
@@ -78,9 +78,9 @@ class StampCardArtwork
         $height = $rows * 120;
         $fillColor = self::validHexColor($fillColor, '#9EE493');
         $iconColor = self::validHexColor($iconColor, '#210124');
-        $iconDataUri = 'data:image/svg+xml;base64,' . base64_encode(self::iconSvg($icon, $iconColor, 100));
+        $iconDataUri = 'data:image/svg+xml;base64,'.base64_encode(self::iconSvg($icon, $iconColor, 100));
         $source = $artworkDataUri ?? $iconDataUri;
-        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="375" height="' . ($height / 2) . '" viewBox="0 0 750 ' . $height . '">';
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="375" height="'.($height / 2).'" viewBox="0 0 750 '.$height.'">';
 
         for ($index = 0; $index < $required; $index++) {
             $column = $index % 4;
@@ -91,12 +91,12 @@ class StampCardArtwork
             $diameter = $radius * 2;
             $filled = $index < $collected;
             $opacity = $filled ? '1' : '0.22';
-            $svg .= '<defs><clipPath id="stamp-' . $index . '"><circle cx="' . $centerX . '" cy="' . $centerY . '" r="' . $radius . '"/></clipPath></defs>';
-            $svg .= '<circle cx="' . $centerX . '" cy="' . $centerY . '" r="' . $radius . '" fill="' . $fillColor . '" fill-opacity="' . ($filled ? '1' : '0.12') . '" stroke="' . $fillColor . '" stroke-opacity="' . ($filled ? '1' : '0.55') . '" stroke-width="5"/>';
-            $svg .= '<image href="' . $source . '" x="' . ($centerX - $radius) . '" y="' . ($centerY - $radius) . '" width="' . $diameter . '" height="' . $diameter . '" preserveAspectRatio="xMidYMid slice" clip-path="url(#stamp-' . $index . ')" opacity="' . $opacity . '"/>';
+            $svg .= '<defs><clipPath id="stamp-'.$index.'"><circle cx="'.$centerX.'" cy="'.$centerY.'" r="'.$radius.'"/></clipPath></defs>';
+            $svg .= '<circle cx="'.$centerX.'" cy="'.$centerY.'" r="'.$radius.'" fill="'.$fillColor.'" fill-opacity="'.($filled ? '1' : '0.12').'" stroke="'.$fillColor.'" stroke-opacity="'.($filled ? '1' : '0.55').'" stroke-width="5"/>';
+            $svg .= '<image href="'.$source.'" x="'.($centerX - $radius).'" y="'.($centerY - $radius).'" width="'.$diameter.'" height="'.$diameter.'" preserveAspectRatio="xMidYMid slice" clip-path="url(#stamp-'.$index.')" opacity="'.$opacity.'"/>';
         }
 
-        return $svg . '</svg>';
+        return $svg.'</svg>';
     }
 
     private static function iconSvg(string $key, string $color, int $size): string
@@ -108,7 +108,7 @@ class StampCardArtwork
             default => '<path d="m12 2.8 2.8 5.7 6.3.9-4.6 4.5 1.1 6.3-5.6-3-5.6 3 1.1-6.3-4.6-4.5 6.3-.9L12 2.8Z"/>',
         };
 
-        return '<svg xmlns="http://www.w3.org/2000/svg" width="' . $size . '" height="' . $size . '" viewBox="0 0 24 24" fill="none" stroke="' . $color . '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' . $symbol . '</svg>';
+        return '<svg xmlns="http://www.w3.org/2000/svg" width="'.$size.'" height="'.$size.'" viewBox="0 0 24 24" fill="none" stroke="'.$color.'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'.$symbol.'</svg>';
     }
 
     private function artworkDataUri(?string $path): ?string
@@ -134,7 +134,7 @@ class StampCardArtwork
             return null;
         }
 
-        return 'data:' . $mime . ';base64,' . base64_encode($contents);
+        return 'data:'.$mime.';base64,'.base64_encode($contents);
     }
 
     private static function isSafeSvg(string $svg): bool
@@ -190,7 +190,7 @@ class StampCardArtwork
                 : '';
         }
 
-        $sourcePath = storage_path('app/public/' . ltrim($logoPath, '/'));
+        $sourcePath = storage_path('app/public/'.ltrim($logoPath, '/'));
 
         if (! is_file($sourcePath)) {
             return null;
@@ -204,7 +204,7 @@ class StampCardArtwork
             (int) round((180 - $source->height()) / 2),
         );
 
-        return $this->writeImage($canvas, 'team-logo-' . $team->id . '.png');
+        return $this->writeImage($canvas, 'team-logo-'.$team->id.'.png');
     }
 
     private function writeImage(ImageInterface $image, string $fileName): string
@@ -215,7 +215,7 @@ class StampCardArtwork
             mkdir($directory, 0750, true);
         }
 
-        $path = $directory . DIRECTORY_SEPARATOR . $fileName;
+        $path = $directory.DIRECTORY_SEPARATOR.$fileName;
         $image->save($path);
 
         return $path;
