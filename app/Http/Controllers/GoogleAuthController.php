@@ -46,7 +46,7 @@ class GoogleAuthController extends Controller
                     'google_refresh_token' => filled($googleUser->refreshToken) ? $googleUser->refreshToken : null,
                 ]);
 
-                $createTeam->handle($user, $user->name . "'s Team", isPersonal: false);
+                $createTeam->handle($user, $user->name."'s Team", isPersonal: false);
             } else {
                 $user->update([
                     'google_id' => $googleUser->getId(),
