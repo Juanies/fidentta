@@ -11,7 +11,7 @@ class AuditLogController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): void
     {
         //
     }
@@ -19,7 +19,7 @@ class AuditLogController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): void
     {
         //
     }
@@ -27,7 +27,7 @@ class AuditLogController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreAuditLogRequest $request)
+    public function store(StoreAuditLogRequest $request): void
     {
         //
     }
@@ -35,7 +35,7 @@ class AuditLogController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(AuditLog $auditLog)
+    public function show(AuditLog $auditLog): void
     {
         //
     }
@@ -43,7 +43,7 @@ class AuditLogController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(AuditLog $auditLog)
+    public function edit(AuditLog $auditLog): void
     {
         //
     }
@@ -51,7 +51,7 @@ class AuditLogController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateAuditLogRequest $request, AuditLog $auditLog)
+    public function update(UpdateAuditLogRequest $request, AuditLog $auditLog): void
     {
         //
     }
@@ -59,7 +59,7 @@ class AuditLogController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(AuditLog $auditLog)
+    public function destroy(AuditLog $auditLog): void
     {
         //
     }

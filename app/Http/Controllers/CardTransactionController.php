@@ -11,7 +11,7 @@ class CardTransactionController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): void
     {
         //
     }
@@ -19,7 +19,7 @@ class CardTransactionController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): void
     {
         //
     }
@@ -27,7 +27,7 @@ class CardTransactionController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreCardTransactionRequest $request)
+    public function store(StoreCardTransactionRequest $request): void
     {
         //
     }
@@ -35,7 +35,7 @@ class CardTransactionController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(CardTransaction $cardTransaction)
+    public function show(CardTransaction $cardTransaction): void
     {
         //
     }
@@ -43,7 +43,7 @@ class CardTransactionController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(CardTransaction $cardTransaction)
+    public function edit(CardTransaction $cardTransaction): void
     {
         //
     }
@@ -51,7 +51,7 @@ class CardTransactionController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateCardTransactionRequest $request, CardTransaction $cardTransaction)
+    public function update(UpdateCardTransactionRequest $request, CardTransaction $cardTransaction): void
     {
         //
     }
@@ -59,7 +59,7 @@ class CardTransactionController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(CardTransaction $cardTransaction)
+    public function destroy(CardTransaction $cardTransaction): void
     {
         //
     }

@@ -4,17 +4,21 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable(['team_id', 'is_active', 'color_scheme', 'stamps_required', 'reward'])]
 
 class cardDesign extends Model
 {
-    public function team()
+    /** @return BelongsTo<Team, $this> */
+    public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
     }
 
-    public function cardsDesigns()
+    /** @return HasMany<card, $this> */
+    public function cardsDesigns(): HasMany
     {
         return $this->hasMany(card::class);
     }

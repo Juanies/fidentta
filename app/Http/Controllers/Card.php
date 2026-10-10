@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\card as LoyaltyCard;
+use App\Models\CustomerRegistrationField;
 use App\Models\CustomerUser;
 use App\Models\Location;
 use App\Models\Team;
@@ -12,6 +13,9 @@ use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -26,10 +30,10 @@ use Spatie\LaravelMobilePass\Models\MobilePass;
 
 class Card extends Controller
 {
-    public function index(string $qr_token)
+    public function index(string $qr_token): View
     {
         $location = Location::where('qr_token', $qr_token)
-            ->with(['team.customerRegistrationFields' => fn ($query) => $query
+            ->with(['team.customerRegistrationFields' => fn($query) => $query
                 ->where('is_active', true)
                 ->orderBy('sort_order')])
             ->firstOrFail();
@@ -47,11 +51,11 @@ class Card extends Controller
         ]);
     }
 
-    public function pageLinks(string $qr_token)
+    public function pageLinks(string $qr_token): View
     {
 
         $location = Location::where('qr_token', $qr_token)
-            ->with(['businessPageLinks', 'team.customerRegistrationFields' => fn ($query) => $query
+            ->with(['businessPageLinks', 'team.customerRegistrationFields' => fn($query) => $query
                 ->where('is_active', true)
                 ->orderBy('sort_order')])
             ->firstOrFail();
@@ -68,10 +72,10 @@ class Card extends Controller
         ]);
     }
 
-    public function store(Request $request, string $qr_token)
+    public function store(Request $request, string $qr_token): View
     {
         $location = Location::where('qr_token', $qr_token)
-            ->with(['team.customerRegistrationFields' => fn ($query) => $query
+            ->with(['team.customerRegistrationFields' => fn($query) => $query
                 ->where('is_active', true)
                 ->orderBy('sort_order')])
             ->firstOrFail();
@@ -88,7 +92,8 @@ class Card extends Controller
                 ->where('team_id', $team->id)
                 ->where('location_id', $location->id)
                 ->where('guest', true)
-                ->find($request->session()->get($sessionKey));
+                ->whereKey($request->session()->get($sessionKey))
+                ->first();
 
             if ($existingCustomer && $existingCustomer->cards->isNotEmpty()) {
                 $card = $existingCustomer->cards->first();
@@ -204,7 +209,7 @@ class Card extends Controller
         ]);
     }
 
-    public function qr(Location $location)
+    public function qr(Location $location): Response
     {
         $url = route('wallet.links', [
             'qr_token' => $location->qr_token,
@@ -232,19 +237,22 @@ class Card extends Controller
         $backing->setAttribute('fill', '#ffffff');
         $svg->appendChild($backing);
 
-        $logo = $document->createElementNS('http://www.w3.org/2000/svg', 'image');
-        $logo->setAttribute('x', '130');
-        $logo->setAttribute('y', '130');
-        $logo->setAttribute('width', '40');
-        $logo->setAttribute('height', '40');
-        $logo->setAttribute('preserveAspectRatio', 'xMidYMid meet');
-        $logo->setAttribute(
-            'href',
-            'data:image/png;base64,'.base64_encode(file_get_contents(public_path('logo.png')))
-        );
-        $svg->appendChild($logo);
+        $logoContents = file_get_contents(public_path('logo.png'));
+
+        if ($logoContents !== false) {
+            $logo = $document->createElementNS('http://www.w3.org/2000/svg', 'image');
+            $logo->setAttribute('x', '130');
+            $logo->setAttribute('y', '130');
+            $logo->setAttribute('width', '40');
+            $logo->setAttribute('height', '40');
+            $logo->setAttribute('preserveAspectRatio', 'xMidYMid meet');
+            $logo->setAttribute('href', 'data:image/png;base64,' . base64_encode($logoContents));
+            $svg->appendChild($logo);
+        }
 
         $qr = $document->saveXML($svg);
+
+        abort_if($qr === false, 500);
 
         return response($qr)
             ->header('Content-Type', 'image/svg+xml');
@@ -259,7 +267,11 @@ class Card extends Controller
         };
     }
 
-    private function customEmail($fields, array $values): ?string
+    /**
+     * @param Collection<int, CustomerRegistrationField> $fields
+     * @param array<array-key, mixed> $values
+     */
+    private function customEmail(Collection $fields, array $values): ?string
     {
         $emailField = $fields->firstWhere('field_key', 'email');
         $email = $emailField ? ($values[$emailField->id] ?? null) : null;
@@ -267,12 +279,13 @@ class Card extends Controller
         return $email ? strtolower($email) : null;
     }
 
+    /** @return array<string, string> */
     private function issueWalletPasses(CustomerUser $customer, LoyaltyCard $card): array
     {
         return array_filter([
             'apple' => $this->issueAppleWalletPass($customer, $card)?->addToWalletUrl(),
             'google' => $this->issueGoogleWalletPass($customer, $card)?->addToWalletUrl(),
-        ]);
+        ], static fn(?string $url): bool => $url !== null);
     }
 
     private function issueAppleWalletPass(CustomerUser $customer, LoyaltyCard $card): ?MobilePass
@@ -289,7 +302,7 @@ class Card extends Controller
 
         try {
             $design = $card->cardDesign;
-            $colorScheme = $design?->color_scheme ?? [];
+            $colorScheme = $design->color_scheme ?? [];
             $backgroundColor = $colorScheme['colorPrincipal'] ?? '#2563EB';
             $requiredStamps = max(1, (int) $design?->stamps_required);
             $progress = WalletStampProgress::circles((int) $card->stamps_collected, $requiredStamps);
@@ -306,7 +319,7 @@ class Card extends Controller
                     $builder->setLogoImage($iconPath);
                 }
 
-                $builder->updateField('stamps', $card->stamps_collected.'/'.$requiredStamps)
+                $builder->updateField('stamps', $card->stamps_collected . '/' . $requiredStamps)
                     ->updateField('progress', $progress)
                     ->save();
                 $existingPass->refresh();
@@ -317,9 +330,9 @@ class Card extends Controller
 
             $passBuilder = StoreCardPassBuilder::make()
                 ->setOrganizationName(config('mobile-pass.apple.organization_name') ?: $card->team->name)
-                ->setSerialNumber('card-'.$card->id)
-                ->setDownloadName(Str::slug($card->team->name).'-tarjeta')
-                ->setDescription('Tarjeta de fidelidad de '.$card->team->name)
+                ->setSerialNumber('card-' . $card->id)
+                ->setDownloadName(Str::slug($card->team->name) . '-tarjeta')
+                ->setDescription('Tarjeta de fidelidad de ' . $card->team->name)
                 ->setLogoText(Str::limit($card->team->name, 20, ''))
                 ->setIconImage(storage_path('app/private/passgenerator/assets/icon.png'));
 
@@ -330,8 +343,8 @@ class Card extends Controller
             $pass = $passBuilder
                 ->setBackgroundColor($backgroundColor)
                 ->setForegroundColor('#FFFFFF')
-                ->setBarcode(BarcodeType::Qr, 'FIDELIDAD-CARD-'.$card->id, (string) $card->id)
-                ->addField('stamps', $card->stamps_collected.'/'.$requiredStamps, label: 'Sellos')
+                ->setBarcode(BarcodeType::Qr, 'FIDELIDAD-CARD-' . $card->id, (string) $card->id)
+                ->addField('stamps', $card->stamps_collected . '/' . $requiredStamps, label: 'Sellos')
                 ->addSecondaryField('progress', $progress, label: 'Progreso')
                 ->addSecondaryField('reward', (string) $design?->reward, label: 'Recompensa')
                 ->save();
@@ -361,7 +374,7 @@ class Card extends Controller
         $relative = str_starts_with($path, '/storage/')
             ? substr($path, strlen('/storage/'))
             : $team->logo;
-        $absolute = storage_path('app/public/'.ltrim($relative, '/'));
+        $absolute = storage_path('app/public/' . ltrim($relative, '/'));
 
         return is_file($absolute) ? $absolute : null;
     }
@@ -411,7 +424,7 @@ class Card extends Controller
         try {
             $team = $card->team;
             $design = $card->cardDesign;
-            $color = $design?->color_scheme['colorPrincipal'] ?? '#2563EB';
+            $color = $design->color_scheme['colorPrincipal'] ?? '#2563EB';
             $requiredStamps = max(1, (int) $design?->stamps_required);
             $progress = WalletStampProgress::circles((int) $card->stamps_collected, $requiredStamps);
 
@@ -419,7 +432,7 @@ class Card extends Controller
                 $color = '#2563EB';
             }
 
-            $classSuffix = 'fidentta_team_'.$team->id;
+            $classSuffix = 'fidentta_team_' . $team->id;
             $passClass = LoyaltyPassClass::find($classSuffix) ?? LoyaltyPassClass::make($classSuffix)
                 ->setIssuerName($team->name)
                 ->setProgramName($team->name)
@@ -434,10 +447,10 @@ class Card extends Controller
 
             $pass = LoyaltyPassBuilder::make()
                 ->setClass($classSuffix)
-                ->setObjectSuffix('card_'.$card->id)
+                ->setObjectSuffix('card_' . $card->id)
                 ->setAccountId((string) $card->id)
-                ->setAccountName($customer->email ?: 'Cliente '.$customer->id)
-                ->setBalanceString($card->stamps_collected.'/'.$requiredStamps)
+                ->setAccountName($customer->email ?: 'Cliente ' . $customer->id)
+                ->setBalanceString($card->stamps_collected . '/' . $requiredStamps)
                 ->setBalanceLabel('Sellos')
                 ->addTextModule('Progreso', $progress, 'stamp_progress')
                 ->setBarcode(BarcodeType::Qr, route('wallet.card', ['qr_token' => $customer->location->qr_token]))

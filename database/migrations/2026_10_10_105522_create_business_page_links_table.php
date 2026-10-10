@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('business_page_links', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('team_id')->cascadeOnDelete();
-            $table->foreignId('location_id')->cascadeOnDelete();
+            $table->foreignId('team_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('location_id')->constrained()->cascadeOnDelete();
             $table->string('url');
             $table->string('icon')->nullable();
             $table->string('name')->nullable();

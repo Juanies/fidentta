@@ -58,15 +58,23 @@ class WalletStampProgress
                 $content = $googlePass->content;
                 $payload = $content['googleObjectPayload'];
                 $payload['loyaltyPoints']['balance']['string'] = $balance;
-                $modules = collect($payload['textModulesData'] ?? [])
-                    ->reject(fn (array $module) => ($module['id'] ?? null) === 'stamp_progress')
-                    ->values();
-                $modules->push([
+                $existingModules = $payload['textModulesData'] ?? [];
+                $modules = [];
+
+                if (is_array($existingModules)) {
+                    foreach ($existingModules as $module) {
+                        if (is_array($module) && ($module['id'] ?? null) !== 'stamp_progress') {
+                            $modules[] = $module;
+                        }
+                    }
+                }
+
+                $modules[] = [
                     'header' => 'Progreso',
                     'body' => $progress,
                     'id' => 'stamp_progress',
-                ]);
-                $payload['textModulesData'] = $modules->all();
+                ];
+                $payload['textModulesData'] = $modules;
                 $content['googleObjectPayload'] = $payload;
 
                 $googlePass->update(['content' => $content]);

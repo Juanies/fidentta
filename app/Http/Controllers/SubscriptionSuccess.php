@@ -3,29 +3,35 @@
 namespace App\Http\Controllers;
 
 use App\Models\Location;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class SubscriptionSuccess extends Controller
 {
-    public function success(Request $request)
+    public function success(Request $request): RedirectResponse
     {
         $user = $request->user();
-        $this->guardarLocationInicial();
+
+        abort_unless($user instanceof User, 401);
+
+        $this->guardarLocationInicial($user);
 
         return redirect()->route('dashboard', [
             'current_team' => $user->currentTeam?->getRouteKey(),
         ]);
     }
 
-    public function guardarLocationInicial()
+    public function guardarLocationInicial(User $user): void
     {
+        $team = $user->currentTeam;
 
-        // Primero crear Location que luego
-        // el usuario podra editar
-        // para crear ya las customer User
+        if (! $team) {
+            return;
+        }
+
         Location::firstOrCreate(
-            ['team_id' => Auth::user()->currentTeam->id],
+            ['team_id' => $team->id],
             [
                 'name' => 'Ubicación principal',
                 'is_active' => true,

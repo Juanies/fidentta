@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Services\WalletStampProgress;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
 #[Fillable(['customer_id', 'team_id', 'card_design_id', 'stamps_collected', 'is_active', 'card_type'])]
@@ -26,22 +28,26 @@ class card extends Model
         });
     }
 
-    public function team()
+    /** @return BelongsTo<Team, $this> */
+    public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
     }
 
-    public function cardDesign()
+    /** @return BelongsTo<cardDesign, $this> */
+    public function cardDesign(): BelongsTo
     {
         return $this->belongsTo(cardDesign::class);
     }
 
-    public function cardTransactions()
+    /** @return HasMany<CardTransaction, $this> */
+    public function cardTransactions(): HasMany
     {
         return $this->hasMany(CardTransaction::class);
     }
 
-    public function customer()
+    /** @return BelongsTo<CustomerUser, $this> */
+    public function customer(): BelongsTo
     {
         return $this->belongsTo(CustomerUser::class, 'customer_id');
     }

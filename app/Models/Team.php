@@ -9,8 +9,10 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
@@ -52,27 +54,32 @@ class Team extends Model
         });
     }
 
-    public function locations()
+    /** @return HasMany<Location, $this> */
+    public function locations(): HasMany
     {
         return $this->hasMany(Location::class);
     }
 
-    public function customerusers()
+    /** @return HasMany<CustomerUser, $this> */
+    public function customerusers(): HasMany
     {
         return $this->hasMany(CustomerUser::class);
     }
 
-    public function customerRegistrationFields()
+    /** @return HasMany<CustomerRegistrationField, $this> */
+    public function customerRegistrationFields(): HasMany
     {
         return $this->hasMany(CustomerRegistrationField::class);
     }
 
-    public function cardDesign()
+    /** @return HasOne<cardDesign, $this> */
+    public function cardDesign(): HasOne
     {
         return $this->hasOne(cardDesign::class);
     }
 
-    public function cards()
+    /** @return HasMany<card, $this> */
+    public function cards(): HasMany
     {
         return $this->hasMany(card::class);
     }

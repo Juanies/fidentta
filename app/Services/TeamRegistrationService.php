@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 
 class TeamRegistrationService
 {
+    /** @param array<array-key, mixed> $registro */
     public function setup(User $user, array $registro): void
     {
         DB::transaction(function () use ($user, $registro) {
