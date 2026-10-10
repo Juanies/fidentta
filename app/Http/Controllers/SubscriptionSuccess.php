@@ -14,7 +14,9 @@ class SubscriptionSuccess extends Controller
         $user = $request->user();
         $this->guardarLocationInicial();
 
-        return redirect()->route('dashboard');
+        return redirect()->route('dashboard', [
+            'current_team' => $user->currentTeam?->getRouteKey(),
+        ]);
     }
 
 

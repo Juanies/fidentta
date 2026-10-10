@@ -28,7 +28,11 @@ class TeamRegistrationService
                 default => 'normal',
             };
 
-            $team->update(['customer_registration_type' => $mode]);
+            $team->update([
+                'name' => $registro['name'] ?? $team->name,
+                'customer_registration_type' => $mode,
+                'logo' => $registro['logo']['url'] ?? $team->logo,
+            ]);
 
             CardDesign::firstOrCreate(
                 ['team_id' => $team->id],

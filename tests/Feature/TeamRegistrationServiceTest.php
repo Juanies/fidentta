@@ -16,7 +16,9 @@ test('team setup can be run repeatedly without creating duplicate locations or c
     app(CreateTeam::class)->handle($user, 'Test owner team');
     $user->refresh();
     $registration = [
+        'name' => 'Café Paso Uno',
         'registro_usuarios' => ['modo' => 'normal'],
+        'logo' => ['type' => 'img', 'url' => '/storage/photos/logo.png'],
         'paleta' => ['slug' => 'cacao-clasico'],
         'sellos' => 8,
         'recompensa' => 'Bebida gratis',
@@ -26,6 +28,15 @@ test('team setup can be run repeatedly without creating duplicate locations or c
     $service->setup($user, $registration);
     $service->setup($user, $registration);
 
-    expect(Location::where('team_id', $user->currentTeam->id)->count())->toBe(1)
-        ->and(CardDesign::where('team_id', $user->currentTeam->id)->count())->toBe(1);
+    $team = $user->currentTeam->fresh();
+    $design = CardDesign::where('team_id', $team->id)->firstOrFail();
+
+    expect(Location::where('team_id', $team->id)->count())->toBe(1)
+        ->and($team->name)->toBe('Café Paso Uno')
+        ->and($team->slug)->toStartWith('cafe-paso-uno')
+        ->and($team->logo)->toBe('/storage/photos/logo.png')
+        ->and($team->customer_registration_type)->toBe('normal')
+        ->and($design->stamps_required)->toBe(8)
+        ->and($design->reward)->toBe('Bebida gratis')
+        ->and($design->color_scheme)->toBe(['slug' => 'cacao-clasico']);
 });

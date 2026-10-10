@@ -16,7 +16,11 @@ class isRegistered
     public function handle(Request $request, Closure $next): Response
     {
         if ($request->user()?->subscribed('fidentta')) {
-            return redirect()->route('dashboard');
+            $team = $request->user()->currentTeam;
+
+            return $team
+                ? redirect()->route('dashboard', ['current_team' => $team->getRouteKey()])
+                : redirect()->route('registera');
         }
 
 

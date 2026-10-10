@@ -1,5 +1,5 @@
 <x-layouts::auth.simple :title="$team->name">
-    <div class="w-full max-w-xl rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
+    <div class=" max-w-xl mx-auto rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
         <p class="text-sm font-semibold text-brand">{{ $location->name }}</p>
         <h1 class="mt-2 text-2xl font-semibold text-ink">Únete a {{ $team->name }}</h1>
         <p class="mt-2 text-sm leading-6 text-muted-foreground">Registra tu tarjeta de fidelidad para empezar a acumular

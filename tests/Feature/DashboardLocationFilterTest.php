@@ -59,6 +59,78 @@ test('customers page filters customer records by the selected location', functio
         ->assertDontSee('sur@example.com');
 });
 
+test('staff can award one stamp to an active customer card from the customer list', function () {
+    $user = makeDashboardFilterUser();
+    $team = $user->currentTeam;
+    $location = Location::create([
+        'team_id' => $team->id,
+        'name' => 'Local Centro',
+        'is_active' => true,
+    ]);
+    $design = $team->cardDesign()->create([
+        'is_active' => true,
+        'color_scheme' => [],
+        'stamps_required' => 8,
+        'reward' => 'Café',
+    ]);
+    $customer = CustomerUser::create([
+        'team_id' => $team->id,
+        'location_id' => $location->id,
+        'email' => 'stamp-customer@example.com',
+        'guest' => false,
+    ]);
+    $card = $customer->cards()->create([
+        'team_id' => $team->id,
+        'card_design_id' => $design->id,
+        'stamps_collected' => 0,
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::dashboard.clientes')
+        ->call('addStamp', $customer->id)
+        ->assertSee('Sello añadido a la tarjeta');
+
+    expect($card->fresh()->stamps_collected)->toBe(1);
+    $this->assertDatabaseHas('card_transactions', [
+        'card_id' => $card->id,
+        'customer_id' => $customer->id,
+        'location_id' => $location->id,
+        'user_id' => $user->id,
+        'stamps_added' => 1,
+    ]);
+});
+
+test('customers page filters the list with the search input', function () {
+    $user = makeDashboardFilterUser();
+    $team = $user->currentTeam;
+    $location = Location::create([
+        'team_id' => $team->id,
+        'name' => 'Local Centro',
+        'is_active' => true,
+    ]);
+    CustomerUser::create([
+        'team_id' => $team->id,
+        'location_id' => $location->id,
+        'email' => 'maria.busqueda@example.com',
+        'guest' => false,
+    ]);
+    CustomerUser::create([
+        'team_id' => $team->id,
+        'location_id' => $location->id,
+        'email' => 'otro.cliente@example.com',
+        'guest' => false,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::dashboard.clientes')
+        ->set('search', 'maria.busqueda')
+        ->assertSee('maria.busqueda@example.com')
+        ->assertDontSee('otro.cliente@example.com');
+});
+
 test('dashboard page renders its live metrics and activity with a location filter', function () {
     $user = makeDashboardFilterUser();
     $team = $user->currentTeam;
@@ -71,7 +143,7 @@ test('dashboard page renders its live metrics and activity with a location filte
     $this->actingAs($user);
 
     Livewire::test('pages::dashboard.inicio')
-        ->assertSee('Sellos entregados por día')
+        ->assertSee('Actividad diaria')
         ->set('locationId', (string) $location->id)
         ->assertSee('Local Centro');
 });
@@ -162,7 +234,7 @@ test('dashboard compares all four metric totals across consecutive seven-day per
         ->assertSee('+100.0%')
         ->assertSee('Sellos entregados')
         ->assertSee('+50.0%')
-        ->assertSee('Pases añadidos a Wallet')
+        ->assertSee('Pases en Wallet')
         ->assertSee('0.0%')
-        ->assertSee('Visitas registradas');
+        ->assertSee('Visitas');
 });

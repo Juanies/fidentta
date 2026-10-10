@@ -1,0 +1,83 @@
+﻿<?php
+
+use Livewire\Component;
+use Illuminate\Support\Carbon;
+
+new class extends Component {
+    public $location;
+    public $recentTransactions;
+    public $team;
+    public $activity;
+    public bool $editing = false;
+    public string $name = '';
+    public string $address = '';
+
+    public function mount(int $id)
+    {
+        $team = auth()->user()->currentTeam;
+        abort_unless($team !== null, 404);
+        $this->team = $team;
+
+        $this->location = $team
+            ->locations()
+            ->withCount(['customerUsers', 'customerUsers as customers_this_month_count' => fn($query) => $query->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]), 'cardTransactions'])
+            ->withSum(
+                [
+                    'cardTransactions as stamps_this_month' => fn($query) => $query->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()]),
+                ],
+                'stamps_added',
+            )
+            ->findOrFail($id);
+
+        $this->name = $this->location->name;
+        $this->address = $this->location->address ?? '';
+        $this->recentTransactions = $this->location->cardTransactions()->with(['customer.registrationValues.field', 'user'])->latest()->limit(8)->get();
+        $this->activity = $this->buildActivity();
+    }
+
+    private function buildActivity(): \Illuminate\Support\Collection
+    {
+        $start = now()->startOfDay()->subDays(6);
+        $byDay = $this->location->cardTransactions()
+            ->where('created_at', '>=', $start)
+            ->selectRaw('DATE(created_at) as activity_date, SUM(stamps_added) as stamps')
+            ->groupBy('activity_date')
+            ->pluck('stamps', 'activity_date');
+
+        $days = collect(range(0, 6))->map(function (int $offset) use ($start, $byDay) {
+            $date = $start->copy()->addDays($offset);
+
+            return ['label' => $date->format('d/m'), 'stamps' => (int) ($byDay[$date->toDateString()] ?? 0)];
+        });
+        $max = max(1, (int) $days->max('stamps'));
+
+        return $days->map(fn($day) => [...$day, 'height' => max(4, (int) round(($day['stamps'] / $max) * 100))]);
+    }
+
+    public function getBestCustomerProperty()
+    {
+        return $this->location->customerUsers()
+            ->withSum(['cards as total_stamps' => fn($cards) => $cards->where('is_active', true)], 'stamps_collected')
+            ->orderByDesc('total_stamps')
+            ->first();
+    }
+
+    public function guardar(): void
+    {
+        $validated = $this->validate([
+            'name' => ['required', 'string', 'min:2', 'max:120'],
+            'address' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $this->location->update($validated);
+        $this->editing = false;
+    }
+
+    public function alternarEstado(): void
+    {
+        $this->location->update(['is_active' => !$this->location->is_active]);
+        $this->location->refresh();
+    }
+};
+?>
+

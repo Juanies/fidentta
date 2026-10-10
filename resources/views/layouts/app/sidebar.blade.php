@@ -15,46 +15,46 @@
         <livewire:team-switcher />
 
         <flux:sidebar.nav class="">
-            <flux:sidebar.group :heading="__('Platform')" class="grid text-ink">
+            <flux:sidebar.group :heading="__('Platform')" class="grid text-white">
                 <flux:sidebar.item icon="home"
                     :href="route('dashboard', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
                     :current="request()->routeIs('dashboard')"
-                    class="text-ink hover:bg-brand-soft hover:text-brand data-current:bg-brand-soft data-current:text-brand"
+                    class="text-white/80! hover:bg-fidentta-cyan/15! hover:text-white! data-current:bg-fidentta-cyan/25! data-current:text-fidentta-cyan!"
                     wire:navigate>
                     {{ __('Inicio') }}
                 </flux:sidebar.item>
                 <flux:sidebar.item icon="users"
                     :href="route('dashboard.clientes', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
                     :current="request()->routeIs('dashboard.clientes')"
-                    class="text-ink hover:bg-brand-soft hover:text-brand data-current:bg-brand-soft data-current:text-brand"
+                    class="text-white/80! hover:bg-fidentta-cyan/15! hover:text-white! data-current:bg-fidentta-cyan/25! data-current:text-fidentta-cyan!"
                     wire:navigate>
                     {{ __('Clientes') }}
                 </flux:sidebar.item>
                 <flux:sidebar.item icon="gift"
                     :href="route('dashboard.fidelizacion', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
                     :current="request()->routeIs('dashboard.fidelizacion')"
-                    class="text-ink hover:bg-brand-soft hover:text-brand data-current:bg-brand-soft data-current:text-brand"
+                    class="text-white/80! hover:bg-fidentta-cyan/15! hover:text-white! data-current:bg-fidentta-cyan/25! data-current:text-fidentta-cyan!"
                     wire:navigate>
                     {{ __('Fidelizacion') }}
                 </flux:sidebar.item>
                 <flux:sidebar.item icon="credit-card"
                     :href="route('dashboard.tarjeta', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
                     :current="request()->routeIs('dashboard.tarjeta')"
-                    class="text-ink hover:bg-brand-soft hover:text-brand data-current:bg-brand-soft data-current:text-brand"
+                    class="text-white/80! hover:bg-fidentta-cyan/15! hover:text-white! data-current:bg-fidentta-cyan/25! data-current:text-fidentta-cyan!"
                     wire:navigate>
                     {{ __('Tarjeta') }}
                 </flux:sidebar.item>
                 <flux:sidebar.item icon="cog"
                     :href="route('dashboard.configuracion', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
                     :current="request()->routeIs('dashboard.configuracion')"
-                    class="text-ink hover:bg-brand-soft hover:text-brand data-current:bg-brand-soft data-current:text-brand"
+                    class="text-white/80! hover:bg-fidentta-cyan/15! hover:text-white! data-current:bg-fidentta-cyan/25! data-current:text-fidentta-cyan!"
                     wire:navigate>
                     {{ __('Configuracion') }}
                 </flux:sidebar.item>
                 <flux:sidebar.item icon="building-storefront" aria-hidden="true"
                     :href="route('dashboard.locales', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
                     :current="request()->routeIs('dashboard.locales', 'locations.index')"
-                    class="text-ink hover:bg-brand-soft hover:text-brand data-current:bg-brand-soft data-current:text-brand"
+                    class="text-white/80! hover:bg-fidentta-cyan/15! hover:text-white! data-current:bg-fidentta-cyan/25! data-current:text-fidentta-cyan!"
                     wire:navigate>
                     {{ __('Locales') }}
                 </flux:sidebar.item>

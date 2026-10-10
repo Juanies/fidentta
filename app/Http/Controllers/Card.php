@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\CustomerUser;
 use App\Models\Location;
+use App\Models\Team;
 use App\Models\card as LoyaltyCard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +25,6 @@ use BaconQrCode\Writer;
 
 class Card extends Controller
 {
-
     public function index(string $qr_token)
     {
         $location = Location::where('qr_token', $qr_token)
@@ -38,11 +38,31 @@ class Card extends Controller
         $team = $location->team;
         $mode = $this->registrationMode($team->customer_registration_type);
 
-        return view('wallet.register', [
+        return view('wallet.page-links', [
             'team' => $team,
             'location' => $location,
             'mode' => $mode,
             'fields' => $team->customerRegistrationFields,
+        ]);
+    }
+
+    public function pageLinks(string $qr_token){
+
+       $location = Location::where('qr_token', $qr_token)
+            ->with(['team.customerRegistrationFields' => fn($query) => $query
+                ->where('is_active', true)
+                ->orderBy('sort_order')])
+            ->firstOrFail();
+
+        $team = $location->team;
+
+
+        abort_unless($location->is_active, 404);
+
+        return view('wallet.page-links', [
+            'team' => $team,
+            'location' => $location,
+
         ]);
     }
 
@@ -77,7 +97,7 @@ class Card extends Controller
                     'location' => $location,
                     'card' => $card,
                     'walletUrls' => $walletUrls,
-                   // 'appleWalletNeedsPublicHttps' => $this->appleWalletNeedsPublicHttps(),
+                    // 'appleWalletNeedsPublicHttps' => $this->appleWalletNeedsPublicHttps(),
                 ]);
             }
 
@@ -250,9 +270,14 @@ class Card extends Controller
             }
 
             if ($existingPass) {
-                $existingPass->builder()
-                    ->setIconImage(storage_path('app/private/passgenerator/assets/icon.png'))
-                    ->updateField('stamps', $card->stamps_collected . '/' . $requiredStamps)
+                $builder = $existingPass->builder()
+                    ->setIconImage($iconPath = $this->teamLogoPath($card->team) ?? storage_path('app/private/passgenerator/assets/icon.png'));
+
+                if ($iconPath !== storage_path('app/private/passgenerator/assets/icon.png')) {
+                    $builder->setLogoImage($iconPath);
+                }
+
+                $builder->updateField('stamps', $card->stamps_collected . '/' . $requiredStamps)
                     ->updateField('progress', $progress)
                     ->save();
                 $existingPass->refresh();
@@ -261,13 +286,19 @@ class Card extends Controller
                 return $existingPass;
             }
 
-            $pass = StoreCardPassBuilder::make()
+            $passBuilder = StoreCardPassBuilder::make()
                 ->setOrganizationName(config('mobile-pass.apple.organization_name') ?: $card->team->name)
                 ->setSerialNumber('card-' . $card->id)
                 ->setDownloadName(Str::slug($card->team->name) . '-tarjeta')
                 ->setDescription('Tarjeta de fidelidad de ' . $card->team->name)
                 ->setLogoText(Str::limit($card->team->name, 20, ''))
-                ->setIconImage(storage_path('app/private/passgenerator/assets/icon.png'))
+                ->setIconImage(storage_path('app/private/passgenerator/assets/icon.png'));
+
+            if ($logoPath = $this->teamLogoPath($card->team)) {
+                $passBuilder->setLogoImage($logoPath)->setIconImage($logoPath);
+            }
+
+            $pass = $passBuilder
                 ->setBackgroundColor($backgroundColor)
                 ->setForegroundColor('#FFFFFF')
                 ->setBarcode(BarcodeType::Qr, 'FIDELIDAD-CARD-' . $card->id, (string) $card->id)
@@ -289,6 +320,21 @@ class Card extends Controller
 
             return null;
         }
+    }
+
+    private function teamLogoPath(Team $team): ?string
+    {
+        if (! $team->logo) {
+            return null;
+        }
+
+        $path = (string) parse_url($team->logo, PHP_URL_PATH);
+        $relative = str_starts_with($path, '/storage/')
+            ? substr($path, strlen('/storage/'))
+            : $team->logo;
+        $absolute = storage_path('app/public/' . ltrim($relative, '/'));
+
+        return is_file($absolute) ? $absolute : null;
     }
 
     private function appleWalletNeedsPublicHttps(): bool
@@ -352,6 +398,10 @@ class Card extends Controller
                 ->setAccountIdLabel('Número de tarjeta')
                 ->setBackgroundColor($color)
                 ->save();
+
+            if ($team->logo) {
+                $passClass->setProgramLogoUrl(url($team->logo))->save();
+            }
 
             $pass = LoyaltyPassBuilder::make()
                 ->setClass($classSuffix)

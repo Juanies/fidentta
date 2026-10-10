@@ -34,7 +34,7 @@ new class extends Component {
 
     protected function rules()
     {
-        return ['registro.name' => 'required|min:3|max:60'];
+        return ['registro.name' => 'required|string|min:3|max:60'];
     }
 
     public function updatedRegistroName(string $name)

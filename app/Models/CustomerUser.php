@@ -10,12 +10,16 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 class CustomerUser extends Model
 {
     use HasMobilePasses;
+
     // customeruser pertenece a un negocio que es team
     // tambien hay que saber la ubicacion de que local
     public function team()
     {
         return $this->belongsTo(Team::class);
     }
+
+
+
 
     public function location()
     {

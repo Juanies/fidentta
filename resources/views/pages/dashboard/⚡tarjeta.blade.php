@@ -1,27 +1,86 @@
 <?php
 
+use App\Models\CustomerRegistrationField;
+use App\Models\cardDesign as CardDesign;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 new class extends Component {
-    public $card;
-    public $registro;
+    use WithFileUploads;
+
     public $team;
+    public $card;
     public $locations;
     public ?string $locationId = null;
+    public $photo;
 
-    public function mount()
+    public string $name = '';
+    public ?string $logoUrl = null;
+    public int $sellos = 8;
+    public string $recompensa = '';
+    public bool $isPersonalizado = false;
+    public string $paletaSeleccionada = 'cacao-clasico';
+    public string $colorPrincipal = '#7C2D12';
+    public string $colorSecundario = '#F59E0B';
+    public string $colorTexto = '#F8FAFC';
+    public string $modoRegistro = 'normal';
+    public array $campos = [];
+    public string $nuevoCampo = '';
+    public ?string $statusMessage = null;
+
+    public array $paletas = [
+        ['slug' => 'cacao-clasico', 'nombre' => 'Cacao Clásico', 'colores' => ['#F59E0B', '#D97706', '#7C2D12'], 'texto' => '#F8FAFC', 'fondo' => 'linear-gradient(135deg, #7C2D12 0%, #B45309 38%, #F59E0B 100%)'],
+        ['slug' => 'azul-royal', 'nombre' => 'Azul Royal', 'colores' => ['#2563EB', '#1D4ED8', '#0F172A'], 'texto' => '#E0F2FE', 'fondo' => 'linear-gradient(135deg, #0F172A 0%, #1D4ED8 55%, #60A5FA 100%)'],
+        ['slug' => 'verde-fresno', 'nombre' => 'Verde Fresco', 'colores' => ['#34D399', '#10B981', '#064E3B'], 'texto' => '#ECFDF5', 'fondo' => 'linear-gradient(135deg, #022C22 0%, #065F46 38%, #34D399 100%)'],
+        ['slug' => 'magenta-boost', 'nombre' => 'Magenta Boost', 'colores' => ['#EC4899', '#8B5CF6', '#3B0764'], 'texto' => '#FDF2F8', 'fondo' => 'linear-gradient(135deg, #3B0764 0%, #7C3AED 40%, #EC4899 100%)'],
+        ['slug' => 'ice-mint', 'nombre' => 'Ice Mint', 'colores' => ['#67E8F9', '#14B8A6', '#0F172A'], 'texto' => '#ECFEFF', 'fondo' => 'linear-gradient(135deg, #0F172A 0%, #0F766E 45%, #67E8F9 100%)'],
+        ['slug' => 'sunset-glow', 'nombre' => 'Sunset Glow', 'colores' => ['#FB7185', '#F59E0B', '#7C2D12'], 'texto' => '#FFF7ED', 'fondo' => 'linear-gradient(135deg, #7C2D12 0%, #F97316 35%, #FB7185 100%)'],
+    ];
+
+    public array $paletasExtras = [
+        ['slug' => 'midnight-violet', 'nombre' => 'Midnight Violet', 'colores' => ['#4F46E5', '#7C3AED', '#0F172A'], 'texto' => '#EDE9FE', 'fondo' => 'linear-gradient(135deg, #0F172A 0%, #4F46E5 45%, #A78BFA 100%)'],
+        ['slug' => 'forest-emerald', 'nombre' => 'Forest Emerald', 'colores' => ['#10B981', '#166534', '#D1FAE5'], 'texto' => '#ECFDF5', 'fondo' => 'linear-gradient(135deg, #022C22 0%, #166534 40%, #34D399 100%)'],
+        ['slug' => 'rose-luxe', 'nombre' => 'Rose Luxe', 'colores' => ['#F472B6', '#EC4899', '#FDF2F8'], 'texto' => '#FFF1F2', 'fondo' => 'linear-gradient(135deg, #831843 0%, #EC4899 50%, #F9A8D4 100%)'],
+        ['slug' => 'ocean-glow', 'nombre' => 'Ocean Glow', 'colores' => ['#0EA5E9', '#14B8A6', '#E0F2FE'], 'texto' => '#F0FDFF', 'fondo' => 'linear-gradient(135deg, #082F49 0%, #0EA5E9 42%, #5EEAD4 100%)'],
+        ['slug' => 'amber-sunset', 'nombre' => 'Amber Sunset', 'colores' => ['#F59E0B', '#F97316', '#FFF7ED'], 'texto' => '#FFF7ED', 'fondo' => 'linear-gradient(135deg, #7C2D12 0%, #F97316 38%, #FBBF24 100%)'],
+        ['slug' => 'lavender-soft', 'nombre' => 'Lavender Soft', 'colores' => ['#A78BFA', '#C4B5FD', '#F5F3FF'], 'texto' => '#2E1065', 'fondo' => 'linear-gradient(135deg, #4C1D95 0%, #A78BFA 50%, #E9D5FF 100%)'],
+    ];
+
+    public array $ideasRecompensa = ['Bebida gratis', 'Pastel gratis', 'Regalo gratis', 'Descuento', '50% en el segundo', '2x1'];
+
+    public array $opcionesCampos = [
+        'nombre' => 'Nombre',
+        'email' => 'Email',
+        'telefono' => 'Teléfono',
+        'cumpleanos' => 'Fecha de cumpleaños',
+    ];
+
+    public function mount(): void
     {
         $this->team = auth()->user()->currentTeam;
         abort_unless($this->team !== null, 404);
 
         $this->card = $this->team->cardDesign;
-
-        if ($this->card) {
-            $this->registro = $this->card->color_scheme;
-        }
-
         $this->locations = $this->team->locations()->where('is_active', true)->orderBy('name')->get();
         $this->locationId = $this->locations->first()?->id;
+
+        $this->name = $this->team->name;
+        $this->logoUrl = $this->team->logo;
+        $this->modoRegistro = in_array($this->team->customer_registration_type, ['none', 'normal', 'custom'], true) ? $this->team->customer_registration_type : 'normal';
+        $this->campos = $this->team->customerRegistrationFields()->where('is_active', true)->orderBy('sort_order')->pluck('field_key')->all();
+
+        $paleta = $this->card?->color_scheme ?? [];
+        $this->paletaSeleccionada = $paleta['slug'] ?? 'cacao-clasico';
+        $this->isPersonalizado = (bool) ($paleta['isPersonalizado'] ?? false);
+        $this->colorPrincipal = $paleta['colorPrincipal'] ?? '#7C2D12';
+        $this->colorSecundario = $paleta['colorSecundario'] ?? '#F59E0B';
+        $this->colorTexto = $paleta['colorTexto'] ?? ($paleta['texto'] ?? '#F8FAFC');
+        $this->sellos = (int) ($this->card?->stamps_required ?? 8);
+        $this->recompensa = (string) ($this->card?->reward ?? 'Bebida gratis');
+        $this->statusMessage = session('tarjeta_status');
     }
 
     public function updatedLocationId(): void
@@ -35,169 +94,479 @@ new class extends Component {
     {
         return $this->locationId ? $this->team->locations()->find($this->locationId) : null;
     }
+
+    public function updatedPhoto(): void
+    {
+        $this->validate(['photo' => 'image|max:1024']);
+
+        $this->logoUrl = Storage::url($this->photo->store('photos', 'public'));
+    }
+
+    public function quitarLogo(): void
+    {
+        $this->logoUrl = null;
+        $this->photo = null;
+    }
+
+    public function cambiarPersonalizado(bool $personalizado): void
+    {
+        $this->isPersonalizado = $personalizado;
+
+        if (!$personalizado) {
+            $this->sincronizarColoresDesdePaleta();
+        }
+    }
+
+    public function cambiarPaleta(string $slug): void
+    {
+        $this->paletaSeleccionada = $slug;
+        $this->sincronizarColoresDesdePaleta();
+    }
+
+    private function sincronizarColoresDesdePaleta(): void
+    {
+        $paleta = $this->paletaActual();
+
+        $this->colorPrincipal = $paleta['colores'][0] ?? $this->colorPrincipal;
+        $this->colorSecundario = $paleta['colores'][1] ?? $this->colorSecundario;
+        $this->colorTexto = $paleta['texto'] ?? $this->colorTexto;
+    }
+
+    private function paletaActual(): array
+    {
+        return collect($this->paletas)->firstWhere('slug', $this->paletaSeleccionada) ??
+            (collect($this->paletasExtras)->firstWhere('slug', $this->paletaSeleccionada) ?? [
+                'slug' => $this->paletaSeleccionada,
+                'nombre' => 'Personalizada',
+                'colores' => [$this->colorPrincipal, $this->colorSecundario, $this->colorTexto],
+                'texto' => $this->colorTexto,
+                'fondo' => "linear-gradient(135deg, {$this->colorPrincipal} 0%, {$this->colorSecundario} 100%)",
+            ]);
+    }
+
+    public function getPreviewPaletaProperty(): array
+    {
+        $base = $this->paletaActual();
+        $principal = $this->isPersonalizado ? $this->colorPrincipal : $base['colores'][0] ?? '#7C2D12';
+        $secundario = $this->isPersonalizado ? $this->colorSecundario : $base['colores'][1] ?? '#F59E0B';
+        $texto = $this->isPersonalizado ? $this->colorTexto : $base['texto'] ?? '#F8FAFC';
+
+        return [
+            'slug' => $this->paletaSeleccionada,
+            'tipo' => $this->isPersonalizado ? 'personalizado' : 'preseleccionado',
+            'isPersonalizado' => $this->isPersonalizado,
+            'colorPrincipal' => $principal,
+            'colorSecundario' => $secundario,
+            'colorTexto' => $texto,
+            'texto' => $texto,
+            'fondo' => $this->isPersonalizado ? "linear-gradient(135deg, {$principal} 0%, {$secundario} 100%)" : $base['fondo'] ?? "linear-gradient(135deg, {$principal} 0%, {$secundario} 100%)",
+            'nombre' => $base['nombre'] ?? 'Personalizada',
+        ];
+    }
+
+    public function sumarSello(): void
+    {
+        $this->sellos = min(12, $this->sellos + 1);
+    }
+
+    public function restarSello(): void
+    {
+        $this->sellos = max(4, $this->sellos - 1);
+    }
+
+    public function seleccionarSellos(int $cantidad): void
+    {
+        $this->sellos = min(12, max(4, $cantidad));
+    }
+
+    public function elegirModo(string $modo): void
+    {
+        if (!in_array($modo, ['none', 'normal', 'custom'], true)) {
+            return;
+        }
+
+        $this->modoRegistro = $modo;
+
+        if ($modo === 'none') {
+            $this->campos = [];
+        }
+    }
+
+    public function alternarCampo(string $campo): void
+    {
+        if (in_array($campo, $this->campos, true)) {
+            $this->campos = array_values(array_diff($this->campos, [$campo]));
+        } else {
+            $this->campos[] = $campo;
+        }
+    }
+
+    public function agregarCampoPersonalizado(): void
+    {
+        $campo = trim($this->nuevoCampo);
+
+        if ($campo !== '' && !in_array($campo, $this->campos, true)) {
+            $this->campos[] = $campo;
+        }
+
+        $this->nuevoCampo = '';
+    }
+
+    public function guardar(): void
+    {
+        $this->statusMessage = null;
+
+        $this->validate([
+            'name' => ['required', 'string', 'min:3', 'max:60'],
+            'sellos' => ['required', 'integer', 'min:4', 'max:12'],
+            'recompensa' => ['required', 'string', 'min:3', 'max:120'],
+            'modoRegistro' => ['required', 'in:none,normal,custom'],
+        ]);
+
+        if ($this->modoRegistro === 'custom' && $this->campos === []) {
+            $this->addError('campos', 'Selecciona al menos un campo para el registro personalizado.');
+
+            return;
+        }
+
+        $slugAnterior = $this->team->slug;
+
+        DB::transaction(function () {
+            $this->team->update([
+                'name' => $this->name,
+                'logo' => $this->logoUrl,
+                'customer_registration_type' => $this->modoRegistro,
+            ]);
+
+            $this->card = CardDesign::updateOrCreate(
+                ['team_id' => $this->team->id],
+                [
+                    'is_active' => true,
+                    'color_scheme' => $this->previewPaleta,
+                    'stamps_required' => $this->sellos,
+                    'reward' => $this->recompensa,
+                ],
+            );
+
+            $this->syncRegistrationFields();
+        });
+
+        $this->team->refresh();
+
+        if ($this->team->slug !== $slugAnterior) {
+            session()->flash('tarjeta_status', 'Tarjeta actualizada correctamente.');
+            $this->redirect(route('dashboard.tarjeta', ['current_team' => $this->team->slug]), navigate: true);
+
+            return;
+        }
+
+        $this->statusMessage = 'Tarjeta actualizada correctamente.';
+    }
+
+    private function syncRegistrationFields(): void
+    {
+        $configured = match ($this->modoRegistro) {
+            'custom' => $this->campos,
+            'normal' => array_intersect($this->campos, ['telefono']),
+            default => [],
+        };
+        $configured = array_values(array_unique(array_filter($configured, 'is_string')));
+
+        $this->team->customerRegistrationFields()->update(['is_active' => false]);
+
+        $knownFields = [
+            'nombre' => ['Nombre', 'text'],
+            'email' => ['Email', 'email'],
+            'telefono' => ['Teléfono', 'tel'],
+            'cumpleanos' => ['Fecha de cumpleaños', 'date'],
+        ];
+
+        foreach ($configured as $position => $campo) {
+            $fieldKey = Str::slug($campo, '_');
+
+            if ($fieldKey === '' || $fieldKey === 'password') {
+                continue;
+            }
+
+            [$label, $type] = $knownFields[$fieldKey] ?? [$campo, 'text'];
+
+            CustomerRegistrationField::updateOrCreate(
+                ['team_id' => $this->team->id, 'field_key' => $fieldKey],
+                [
+                    'label' => $label,
+                    'type' => $type,
+                    'is_required' => $this->modoRegistro === 'custom',
+                    'sort_order' => $position,
+                    'is_active' => true,
+                ],
+            );
+        }
+    }
 };
 ?>
 
 <div class="flex h-full w-full flex-1 flex-col gap-6 p-2 md:p-5">
 
-    <header
-        class="rounded-4xl border border-white/10 bg-fidentta-gradient-soft p-6 shadow-2xl shadow-fidentta-purple/10 md:p-8">
-        <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-                <p class="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand">Constructor de
-                    fidelización</p>
-                <h1 class="text-3xl font-semibold tracking-tight text-ink md:text-4xl">Diseña una tarjeta que tus
-                    clientes quieran usar</h1>
-                <p class="mt-3 max-w-2xl text-sm leading-7 text-text-secondary/80 md:text-base">Configura la
-                    mecánica, la recompensa y la forma de compartirla. La tarjeta no es un pago: es el camino más
-                    corto hacia la próxima visita.</p>
-            </div>
-            <div class="text-left lg:text-right">
-                <p class="text-xs text-muted-foreground">Estado de la tarjeta</p>
-                <p class="mt-1 text-2xl font-semibold text-ink">{{ $card ? 'Configurada' : 'Pendiente' }}</p>
-            </div>
+    <header class="flex flex-col gap-3 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-brand">Tarjeta de fidelidad</p>
+            <h1 class="mt-1 text-3xl font-semibold tracking-tight text-ink">Edita tu tarjeta</h1>
+            <p class="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">Los mismos datos del asistente
+                inicial: nombre, logo, colores, sellos, recompensa y registro de clientes.</p>
         </div>
-        <div class="mt-7 h-1.5 overflow-hidden rounded-full bg-white/10">
-            <div class="h-full rounded-full bg-brand transition-all {{ $card ? 'w-full' : 'w-1/4' }}"></div>
-        </div>
+        <p class="text-sm text-text-secondary/70">Estado: <span
+                class="font-semibold {{ $card ? 'text-fidentta-teal' : 'text-text-secondary/60' }}">{{ $card ? 'Publicada' : 'Borrador' }}</span>
+        </p>
     </header>
 
-
-    @if ($card)
-        @php($palette = $card->color_scheme ?? [])
-        <div class="rounded-xl border border-border p-5 shadow-sm sm:p-6"
-            style="background: {{ $palette['fondo'] ?? '#1D4ED8' }}; color: {{ $palette['texto'] ?? '#FFFFFF' }};">
-            <div class="flex items-center gap-4">
-                <div
-                    class="flex h-11 w-11 items-center justify-center rounded-full border border-white/30 bg-white/15 text-lg font-bold">
-                    {{ strtoupper(substr($team->name, 0, 1)) }}
-                </div>
-                <span class="text-base font-semibold">{{ $team->name }}</span>
-            </div>
-
-            <div class="mt-5 grid grid-cols-4 gap-3">
-                @for ($i = 0; $i < $card->stamps_required; $i++)
-                    <div class="flex items-center justify-center">
-                        <div
-                            class="h-14 w-14 rounded-full border border-white/30 bg-white/10 shadow-inner shadow-white/20">
-                        </div>
-                    </div>
-                @endfor
-            </div>
-
-            <p class="mt-5 text-sm opacity-85">Completa los {{ $card->stamps_required }} sellos y consigue:
-                {{ $card->reward }}</p>
-
-            <div
-                class="mt-8 flex flex-col items-center gap-4 rounded-lg bg-white/15 p-4 sm:flex-row sm:justify-between">
-                @if ($this->selectedLocation)
-                    <div class="flex items-center gap-3">
-                        <label for="card-location" class="text-sm font-semibold">QR de este local</label>
-                        <select id="card-location" wire:model.live="locationId"
-                            class="rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-sm">
-                            @foreach ($locations as $location)
-                                <option value="{{ $location->id }}">{{ $location->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <a href="{{ route('locations.index', ['current_team' => $team, 'id' => $this->selectedLocation->id]) }}"
-                        wire:navigate class="text-sm font-semibold underline underline-offset-4">Gestionar local</a>
-                    <img src="{{ route('location.qr', $this->selectedLocation) }}"
-                        alt="QR de {{ $this->selectedLocation->name }}" width="150" height="150"
-                        class="size-36 rounded-md bg-white p-2">
-                @else
-                    <p class="text-sm">Crea un local para generar su QR.</p>
-                    <a href="{{ route('dashboard.locales', ['current_team' => $team]) }}" wire:navigate
-                        class="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-ink">Crear local</a>
-                @endif
-            </div>
-
-            <div class="hidden">
-                <svg width="120" height="120" viewBox="0 0 21 21" fill="none"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M11.75 8.75C12.693 8.75 13.164 8.75 13.457 8.457C13.75 8.164 13.75 7.693 13.75 6.75C13.75 5.807 13.75 5.336 14.043 5.043C14.336 4.75 14.807 4.75 15.75 4.75M4.75 11.75H6.75C7.693 11.75 8.164 11.75 8.457 12.043C8.75 12.336 8.75 12.807 8.75 13.75V15.75M5.125 15.5H5M4.75 19.75C4.286 19.75 4.053 19.75 3.858 19.728C3.07013 19.6392 2.33575 19.2855 1.77511 18.7249C1.21447 18.1643 0.860796 17.4299 0.772 16.642C0.75 16.447 0.75 16.214 0.75 15.75M15.75 19.75C16.214 19.75 16.447 19.75 16.642 19.728C17.4299 19.6392 18.1643 19.2855 18.7249 18.7249C19.2855 18.1643 19.6392 17.4299 19.728 16.642C19.75 16.447 19.75 16.214 19.75 15.75M4.75 0.75C4.286 0.75 4.053 0.75 3.858 0.772C3.07013 0.860796 2.33575 1.21447 1.77511 1.77511C1.21447 2.33575 0.860796 3.07013 0.772 3.858C0.75 4.053 0.75 4.286 0.75 4.75M15.75 0.75C16.214 0.75 16.447 0.75 16.642 0.772C17.4299 0.860796 18.1643 1.21447 18.7249 1.77511C19.2855 2.33575 19.6392 3.07013 19.728 3.858C19.75 4.053 19.75 4.286 19.75 4.75M5.043 5.043C4.75 5.336 4.75 5.807 4.75 6.75C4.75 7.693 4.75 8.164 5.043 8.457C5.336 8.75 5.807 8.75 6.75 8.75C7.693 8.75 8.164 8.75 8.457 8.457C8.75 8.164 8.75 7.693 8.75 6.75C8.75 5.807 8.75 5.336 8.457 5.043C8.164 4.75 7.693 4.75 6.75 4.75C5.807 4.75 5.336 4.75 5.043 5.043ZM5.25 15.5C5.25 15.5663 5.22366 15.6299 5.17678 15.6768C5.12989 15.7237 5.0663 15.75 5 15.75C4.9337 15.75 4.87011 15.7237 4.82322 15.6768C4.77634 15.6299 4.75 15.5663 4.75 15.5C4.75 15.4337 4.77634 15.3701 4.82322 15.3232C4.87011 15.2763 4.9337 15.25 5 15.25C5.0663 15.25 5.12989 15.2763 5.17678 15.3232C5.22366 15.3701 5.25 15.4337 5.25 15.5ZM12.043 12.043C11.75 12.336 11.75 12.807 11.75 13.75C11.75 14.693 11.75 15.164 12.043 15.457C12.336 15.75 12.807 15.75 13.75 15.75C14.693 15.75 15.164 15.75 15.457 15.457C15.75 15.164 15.75 14.693 15.75 13.75C15.75 12.807 15.75 12.336 15.457 12.043C15.164 11.75 14.693 11.75 13.75 11.75C12.807 11.75 12.336 11.75 12.043 12.043Z"
-                        stroke="black" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-            </div>
-        </div>
-    @else
-        <section class="rounded-xl border border-dashed border-border bg-card p-8 text-center">
-            <h2 class="text-lg font-semibold text-ink">Todavía no hay tarjeta configurada</h2>
-            <p class="mt-2 text-sm text-muted-foreground">Completa el asistente de configuración para definir sellos,
-                colores y recompensa.</p>
-            <a href="{{ route('registera') }}"
-                class="mt-5 inline-flex rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white">Abrir
-                configuración</a>
-        </section>
+    @if ($statusMessage)
+        <p role="status" class="rounded-lg border border-green-700/20 bg-green-700/5 px-4 py-3 text-sm text-green-800">
+            {{ $statusMessage }}</p>
     @endif
 
-    <section class="grid gap-5 lg:grid-cols-2">
-        <article class="rounded-xl border border-border bg-card p-5 sm:p-6">
-            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Diseño guardado</p>
-            <h2 class="mt-2 text-xl font-semibold text-ink">Reglas de la tarjeta</h2>
-            <dl class="mt-5 divide-y divide-border">
-                <div class="flex items-center justify-between gap-4 py-3">
-                    <dt class="text-sm text-muted-foreground">Meta de sellos</dt>
-                    <dd class="font-semibold text-ink">{{ $card?->stamps_required ?? '—' }}</dd>
+    <section class="grid gap-6 lg:grid-cols-5">
+        <div class="space-y-5 lg:col-span-3">
+            <article class="rounded-xl border border-border bg-card p-5 sm:p-6">
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Paso 1 · Negocio</p>
+                <h2 class="mt-2 text-lg font-semibold text-ink">Nombre y logo</h2>
+                <div class="mt-5 space-y-2">
+                    <label for="card-name" class="block text-sm font-semibold text-ink">Nombre del negocio</label>
+                    <input id="card-name" wire:model.live="name" type="text" maxlength="60"
+                        class="w-full rounded-lg border border-border bg-background px-4 py-3 text-ink outline-none transition placeholder:text-muted-foreground/70 focus:border-brand focus:ring-2 focus:ring-brand/20">
+                    @error('name')
+                        <span class="mt-1 block text-sm text-red-700">{{ $message }}</span>
+                    @enderror
                 </div>
-                <div class="flex items-center justify-between gap-4 py-3">
-                    <dt class="text-sm text-muted-foreground">Recompensa</dt>
-                    <dd class="max-w-[60%] text-right font-semibold text-ink">{{ $card?->reward ?? 'Sin configurar' }}
-                    </dd>
+                <div class="mt-5">
+                    <p class="text-sm font-semibold text-ink">Logo (opcional)</p>
+                    <div class="mt-3 flex items-center gap-4">
+                        @if ($logoUrl)
+                            <img src="{{ $logoUrl }}" alt="Logo actual"
+                                class="h-12 w-12 rounded-full border border-border object-cover">
+                            <button type="button" wire:click="quitarLogo"
+                                class="rounded-lg border border-border px-3 py-2 text-xs font-semibold text-muted-foreground transition hover:border-red-400 hover:text-red-600">Quitar
+                                logo</button>
+                        @endif
+                        <input wire:model.live="photo" type="file" accept="image/*"
+                            class="block w-full text-sm text-muted-foreground file:mr-4 file:rounded-lg file:border-0 file:bg-brand file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-700">
+                    </div>
+                    @error('photo')
+                        <span class="mt-1 block text-sm text-red-700">{{ $message }}</span>
+                    @enderror
                 </div>
-                <div class="flex items-center justify-between gap-4 py-3">
-                    <dt class="text-sm text-muted-foreground">Locales activos</dt>
-                    <dd class="font-semibold text-ink">{{ $locations->count() }}</dd>
-                </div>
-            </dl>
-            <a href="{{ route('dashboard.fidelizacion', ['current_team' => $team]) }}" wire:navigate
-                class="mt-4 inline-flex items-center rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700">Ver
-                programa <span class="ml-2" aria-hidden="true">&rarr;</span></a>
-        </article>
+            </article>
 
-        <article class="rounded-xl border border-border bg-card p-5 sm:p-6">
-            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Distribución</p>
-            <h2 class="mt-2 text-xl font-semibold text-ink">Un QR para cada local</h2>
-            <p class="mt-2 text-sm leading-6 text-muted-foreground">El QR abre el registro de clientes del local. Los
-                pases para Wallet dependen de la configuración de cada plataforma.</p>
-            <div class="mt-5 flex flex-wrap gap-2">
-                @forelse ($locations as $location)
-                    <a href="{{ route('locations.index', ['current_team' => $team, 'id' => $location->id]) }}"
-                        wire:navigate
-                        class="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-ink transition hover:border-brand/40 hover:text-brand">
-                        <span
-                            class="h-2 w-2 rounded-full {{ $location->is_active ? 'bg-green-600' : 'bg-gray-400' }}"></span>{{ $location->name }}
-                    </a>
-                @empty
-                    <p class="text-sm text-muted-foreground">Todavía no hay locales activos.</p>
-                @endforelse
+            <article class="rounded-xl border border-border bg-card p-5 sm:p-6">
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Paso 2 · Identidad visual</p>
+                <h2 class="mt-2 text-lg font-semibold text-ink">Colores de la tarjeta</h2>
+                <div class="mt-4 flex gap-2">
+                    <button type="button" wire:click="cambiarPersonalizado(false)"
+                        class="rounded-full px-4 py-2 text-sm font-semibold transition {{ !$isPersonalizado ? 'bg-brand text-white' : 'border border-border text-muted-foreground hover:text-ink' }}">Preseleccionado</button>
+                    <button type="button" wire:click="cambiarPersonalizado(true)"
+                        class="rounded-full px-4 py-2 text-sm font-semibold transition {{ $isPersonalizado ? 'bg-brand text-white' : 'border border-border text-muted-foreground hover:text-ink' }}">Personalizado</button>
+                </div>
+                @if ($isPersonalizado)
+                    <div class="mt-4 grid gap-4 sm:grid-cols-3">
+                        <label class="block rounded-lg border border-border bg-background p-3">
+                            <span
+                                class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-text-secondary/70">Principal</span>
+                            <input type="color" wire:model.live="colorPrincipal"
+                                class="h-12 w-full cursor-pointer rounded-lg border-0 bg-transparent p-0">
+                        </label>
+                        <label class="block rounded-lg border border-border bg-background p-3">
+                            <span
+                                class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-text-secondary/70">Secundario</span>
+                            <input type="color" wire:model.live="colorSecundario"
+                                class="h-12 w-full cursor-pointer rounded-lg border-0 bg-transparent p-0">
+                        </label>
+                        <label class="block rounded-lg border border-border bg-background p-3">
+                            <span
+                                class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-text-secondary/70">Texto</span>
+                            <input type="color" wire:model.live="colorTexto"
+                                class="h-12 w-full cursor-pointer rounded-lg border-0 bg-transparent p-0">
+                        </label>
+                    </div>
+                @else
+                    <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                        @foreach (array_merge($paletas, $paletasExtras) as $paleta)
+                            <button type="button" wire:click="cambiarPaleta('{{ $paleta['slug'] }}')"
+                                class="relative flex h-16 flex-col justify-between rounded-lg p-2.5 text-left text-xs font-semibold shadow-sm transition hover:-translate-y-0.5 {{ $paletaSeleccionada === $paleta['slug'] ? 'ring-2 ring-brand ring-offset-2' : '' }}"
+                                style="background: {{ $paleta['fondo'] }}; color: {{ $paleta['texto'] }};">
+                                <span class="flex gap-1">
+                                    @foreach ($paleta['colores'] as $color)
+                                        <span class="h-2 w-4 rounded-full"
+                                            style="background-color: {{ $color }};"></span>
+                                    @endforeach
+                                </span>
+                                {{ $paleta['nombre'] }}
+                            </button>
+                        @endforeach
+                    </div>
+                @endif
+            </article>
+
+            <article class="rounded-xl border border-border bg-card p-5 sm:p-6">
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Paso 3 · Sellos y recompensa
+                </p>
+                <h2 class="mt-2 text-lg font-semibold text-ink">Mecánica del programa</h2>
+                <div class="mt-4 flex items-center gap-4">
+                    <button type="button" wire:click="restarSello" aria-label="Restar sello"
+                        class="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background text-xl text-ink transition hover:border-brand hover:text-brand">−</button>
+                    <div class="min-w-16 text-center">
+                        <span class="text-3xl font-semibold text-ink">{{ $sellos }}</span>
+                        <span class="block text-xs uppercase tracking-[0.18em] text-muted-foreground">sellos</span>
+                    </div>
+                    <button type="button" wire:click="sumarSello" aria-label="Sumar sello"
+                        class="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-background text-xl text-ink transition hover:border-brand hover:text-brand">+</button>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach ([4, 6, 8, 10, 12] as $preset)
+                            <button type="button" wire:click="seleccionarSellos({{ $preset }})"
+                                class="rounded-lg border px-3 py-2 text-xs font-semibold transition {{ $sellos === $preset ? 'border-brand bg-brand-soft text-brand' : 'border-border text-muted-foreground hover:border-brand/40' }}">{{ $preset }}</button>
+                        @endforeach
+                    </div>
+                </div>
+                @error('sellos')
+                    <span class="mt-1 block text-sm text-red-700">{{ $message }}</span>
+                @enderror
+                <div class="mt-5">
+                    <label for="card-reward" class="block text-sm font-semibold text-ink">Recompensa</label>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        @foreach ($ideasRecompensa as $idea)
+                            <button type="button" wire:click="$set('recompensa', '{{ $idea }}')"
+                                class="rounded-full border px-3 py-1.5 text-xs font-medium transition {{ $recompensa === $idea ? 'border-brand bg-brand-soft text-brand' : 'border-border text-muted-foreground hover:border-brand/40 hover:text-ink' }}">{{ $idea }}</button>
+                        @endforeach
+                    </div>
+                    <input id="card-reward" wire:model.live="recompensa" type="text" maxlength="120"
+                        placeholder="Ej. Un café gratis"
+                        class="mt-3 w-full rounded-lg border border-border bg-background px-4 py-3 text-ink outline-none transition placeholder:text-muted-foreground/70 focus:border-brand focus:ring-2 focus:ring-brand/20">
+                    @error('recompensa')
+                        <span class="mt-1 block text-sm text-red-700">{{ $message }}</span>
+                    @enderror
+                </div>
+            </article>
+
+            <article class="rounded-xl border border-border bg-card p-5 sm:p-6">
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-brand">Paso 4 · Registro de clientes
+                </p>
+                <h2 class="mt-2 text-lg font-semibold text-ink">Qué datos pide el formulario</h2>
+                <div class="mt-4 grid gap-3 sm:grid-cols-3">
+                    <button type="button" wire:click="elegirModo('none')"
+                        class="rounded-lg border p-4 text-left transition {{ $modoRegistro === 'none' ? 'border-brand bg-brand-soft' : 'border-border hover:border-brand/40' }}">
+                        <span class="text-sm font-semibold text-ink">Sin registro</span>
+                        <span class="mt-1 block text-xs text-muted-foreground">Tarjeta al instante, sin datos.</span>
+                    </button>
+                    <button type="button" wire:click="elegirModo('normal')"
+                        class="rounded-lg border p-4 text-left transition {{ $modoRegistro === 'normal' ? 'border-brand bg-brand-soft' : 'border-border hover:border-brand/40' }}">
+                        <span class="text-sm font-semibold text-ink">Básico</span>
+                        <span class="mt-1 block text-xs text-muted-foreground">Email y contraseña.</span>
+                    </button>
+                    <button type="button" wire:click="elegirModo('custom')"
+                        class="rounded-lg border p-4 text-left transition {{ $modoRegistro === 'custom' ? 'border-brand bg-brand-soft' : 'border-border hover:border-brand/40' }}">
+                        <span class="text-sm font-semibold text-ink">Personalizado</span>
+                        <span class="mt-1 block text-xs text-muted-foreground">Eliges los campos.</span>
+                    </button>
+                </div>
+                @if ($modoRegistro === 'normal')
+                    <div
+                        class="mt-4 flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3">
+                        <span class="text-sm text-ink">Teléfono (opcional)</span>
+                        <button type="button" wire:click="alternarCampo('telefono')"
+                            class="rounded-full px-3 py-1.5 text-xs font-semibold transition {{ in_array('telefono', $campos, true) ? 'bg-brand text-white' : 'border border-border text-muted-foreground' }}">
+                            {{ in_array('telefono', $campos, true) ? 'Activo' : 'Inactivo' }}</button>
+                    </div>
+                @elseif ($modoRegistro === 'custom')
+                    <div class="mt-4 grid gap-2 sm:grid-cols-2">
+                        @foreach ($opcionesCampos as $campo => $etiqueta)
+                            <button type="button" wire:click="alternarCampo('{{ $campo }}')"
+                                class="flex items-center justify-between rounded-lg border px-4 py-3 text-left text-sm transition {{ in_array($campo, $campos, true) ? 'border-brand bg-brand-soft text-ink' : 'border-border text-muted-foreground hover:border-brand/40' }}">
+                                {{ $etiqueta }}
+                                <span>{{ in_array($campo, $campos, true) ? '✓' : '' }}</span>
+                            </button>
+                        @endforeach
+                    </div>
+                    <div class="mt-3 flex flex-col gap-3 sm:flex-row">
+                        <input wire:model="nuevoCampo" wire:keydown.enter="agregarCampoPersonalizado" type="text"
+                            placeholder="Añade otro campo, por ejemplo: ciudad"
+                            class="min-w-0 flex-1 rounded-lg border border-border bg-background px-4 py-3 text-sm text-ink outline-none placeholder:text-muted-foreground/70 focus:border-brand focus:ring-2 focus:ring-brand/20">
+                        <button type="button" wire:click="agregarCampoPersonalizado"
+                            class="rounded-lg bg-brand px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-700">Añadir</button>
+                    </div>
+                    @error('campos')
+                        <span class="mt-1 block text-sm text-red-700">{{ $message }}</span>
+                    @enderror
+                @endif
+            </article>
+
+            <div class="flex items-center gap-4">
+                <button type="button" wire:click="guardar" wire:loading.attr="disabled" wire:target="guardar,photo"
+                    class="rounded-lg bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:opacity-60">Guardar
+                    cambios</button>
+                <a href="{{ route('dashboard.fidelizacion', ['current_team' => $team]) }}" wire:navigate
+                    class="text-sm font-semibold text-brand hover:text-brand-700">Ver programa &rarr;</a>
             </div>
-        </article>
-    </section>
+        </div>
 
-    <section class="grid gap-4 md:grid-cols-3">
-        <div class="rounded-3xl border border-white/10 bg-white/3 p-5"><span
-                class="text-xs font-semibold uppercase tracking-[0.18em] text-fidentta-cyan">Siguiente</span>
-            <h3 class="mt-3 text-lg font-semibold text-text">Define la recompensa</h3>
-            <p class="mt-2 text-sm leading-6 text-text-secondary/70">Elige qué recibe el cliente al completar sus
-                sellos.</p><span
-                class="mt-4 inline-flex rounded-full bg-white/5 px-3 py-1 text-xs text-text-secondary/60">Pendiente</span>
-        </div>
-        <div class="rounded-3xl border border-white/10 bg-white/3 p-5"><span
-                class="text-xs font-semibold uppercase tracking-[0.18em] text-fidentta-teal">Distribución</span>
-            <h3 class="mt-3 text-lg font-semibold text-text">QR y NFC incluidos</h3>
-            <p class="mt-2 text-sm leading-6 text-text-secondary/70">Descarga e imprime el QR asociado a cada local.</p>
-            <a href="{{ route('dashboard.locales', ['current_team' => $team]) }}" wire:navigate
-                class="mt-4 inline-flex text-xs font-semibold text-fidentta-teal">Ver QR del programa
-                &rarr;</a>
-        </div>
-        <div class="rounded-3xl border border-white/10 bg-white/3 p-5"><span
-                class="text-xs font-semibold uppercase tracking-[0.18em] text-fidentta-purple">Seguridad</span>
-            <h3 class="mt-3 text-lg font-semibold text-text">Sellos protegidos</h3>
-            <p class="mt-2 text-sm leading-6 text-text-secondary/70">El cliente añade su tarjeta; el negocio valida
-                cada visita.</p><span
-                class="mt-4 inline-flex rounded-full bg-fidentta-purple/10 px-3 py-1 text-xs text-fidentta-purple">Configurado</span>
+        <div class="lg:col-span-2">
+            <div class="space-y-5 lg:sticky lg:top-6">
+                <div>
+                    <p class="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-brand">Vista previa</p>
+                    <div class="mx-auto w-full max-w-xs">
+                        <div class="rounded-2xl border border-white/10 p-4 shadow-xl shadow-fidentta-purple/10"
+                            style="background: {{ $this->previewPaleta['fondo'] }}; color: {{ $this->previewPaleta['texto'] }};">
+                            <div class="flex items-center gap-3">
+                                @if ($logoUrl)
+                                    <img src="{{ $logoUrl }}" alt="Logo del negocio"
+                                        class="h-8 w-8 rounded-full border border-white/20 bg-white/10 object-cover">
+                                @else
+                                    <div
+                                        class="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-sm font-bold">
+                                        {{ strtoupper(substr($name, 0, 1)) }}
+                                    </div>
+                                @endif
+                                <span class="truncate text-sm font-semibold">{{ $name }}</span>
+                            </div>
+                            <div class="mt-4 flex flex-wrap gap-1.5">
+                                @for ($i = 0; $i < $sellos; $i++)
+                                    <div
+                                        class="h-7 w-7 rounded-full border border-white/30 bg-white/10 shadow-inner shadow-white/20">
+                                    </div>
+                                @endfor
+                            </div>
+                            <p class="mt-4 text-xs opacity-85">Completa los {{ $sellos }} sellos y consigue:
+                                {{ $recompensa }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <article class="rounded-xl border border-border bg-card p-5">
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-brand">QR por local</p>
+                    @if ($this->selectedLocation)
+                        <div class="mt-3 flex items-center gap-3">
+                            <label for="card-location" class="text-sm font-semibold text-ink">Local</label>
+                            <select id="card-location" wire:model.live="locationId"
+                                class="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-ink">
+                                @foreach ($locations as $location)
+                                    <option value="{{ $location->id }}">{{ $location->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="mt-4 flex items-center gap-4">
+                            <img src="{{ route('location.qr', $this->selectedLocation) }}"
+                                alt="QR de {{ $this->selectedLocation->name }}" width="112" height="112"
+                                class="size-28 rounded-md bg-white p-2">
+                            <a href="{{ route('locations.index', ['current_team' => $team, 'id' => $this->selectedLocation->id]) }}"
+                                wire:navigate class="text-sm font-semibold text-brand hover:text-brand-700">Gestionar
+                                local
+                                &rarr;</a>
+                        </div>
+                    @else
+                        <p class="mt-3 text-sm text-muted-foreground">Crea un local para generar su QR.</p>
+                        <a href="{{ route('dashboard.locales', ['current_team' => $team]) }}" wire:navigate
+                            class="mt-3 inline-flex rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white">Crear
+                            local</a>
+                    @endif
+                </article>
+            </div>
         </div>
     </section>
 </div>

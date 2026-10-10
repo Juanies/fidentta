@@ -29,6 +29,11 @@ Route::post(
     [Card::class, 'store']
 )->name('wallet.card.store');
 
+Route::get(
+    '/location/{qr_token}/links',
+    [Card::class, 'pageLinks']
+)->name('wallet.links');
+
 Route::get('/auth/redirect', [GoogleAuthController::class, 'redirect'])->name('google.redirect');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('google.callback');
 Route::prefix('{current_team}')
@@ -59,7 +64,7 @@ Route::get('/subscription-checkout', function (Request $request) {
             'success_url' => route('subscription.success'),
 
         ]);
-})->middleware([App\Http\Middleware\isRegistered::class])->name('subscription-checkout');;
+})->middleware(['auth', IsRegistered::class])->name('subscription-checkout');
 
 
 Route::mobilePass();

@@ -173,7 +173,7 @@ h2 {
     --paper: oklch(0.966 0.007 85);
     --ink: oklch(0.2 0.012 265);
     --ink2: oklch(0.43 0.017 265);
-    --mint: oklch(0.81 0.19 160);
+    --mint: rgb(0, 229, 149);
     --mintd: oklch(0.6 0.13 162);
 
     /* Surfaces */
