@@ -117,7 +117,7 @@ new class extends Component {
                         <p class="text-sm font-semibold text-ink">
                             {{ $this->selectedLocation->address ?: 'Dirección pendiente' }}</p>
                         <p class="mt-2 break-all text-xs text-ink2">
-                            {{ route('wallet.card', ['qr_token' => $this->selectedLocation->qr_token]) }}</p>
+                            {{ route('wallet.links', ['qr_token' => $this->selectedLocation->qr_token]) }}</p>
                         <a href="{{ route('locations.index', ['current_team' => $team, 'id' => $this->selectedLocation->id]) }}"
                             wire:navigate
                             class="mt-3 inline-flex text-sm font-semibold text-fidentta-teal underline decoration-2 underline-offset-4 transition hover:text-ink">Gestionar
@@ -131,15 +131,18 @@ new class extends Component {
             <div class="mt-6 grid grid-cols-3 gap-px border border-border" style="background: var(--border);">
                 <div class="bg-background p-3 text-center">
                     <p class="text-[10px] font-semibold uppercase tracking-wide text-ink2">Clientes nuevos</p>
-                    <p class="mt-1 text-xl font-semibold text-ink tabular-nums">{{ number_format($this->stats['customers']) }}</p>
+                    <p class="mt-1 text-xl font-semibold text-ink tabular-nums">
+                        {{ number_format($this->stats['customers']) }}</p>
                 </div>
                 <div class="bg-background p-3 text-center">
                     <p class="text-[10px] font-semibold uppercase tracking-wide text-ink2">Sellos del mes</p>
-                    <p class="mt-1 text-xl font-semibold text-ink tabular-nums">{{ number_format($this->stats['stamps']) }}</p>
+                    <p class="mt-1 text-xl font-semibold text-ink tabular-nums">
+                        {{ number_format($this->stats['stamps']) }}</p>
                 </div>
                 <div class="bg-background p-3 text-center">
                     <p class="text-[10px] font-semibold uppercase tracking-wide text-ink2">Visitas</p>
-                    <p class="mt-1 text-xl font-semibold text-ink tabular-nums">{{ number_format($this->stats['visits']) }}</p>
+                    <p class="mt-1 text-xl font-semibold text-ink tabular-nums">
+                        {{ number_format($this->stats['visits']) }}</p>
                 </div>
             </div>
         </article>

@@ -1,56 +1,50 @@
-@php
-    $userAgent = strtolower(request()->userAgent() ?? '');
-
-    $isApple =
-        str_contains($userAgent, 'iphone') || str_contains($userAgent, 'ipad') || str_contains($userAgent, 'ipod');
-
-    $isAndroid = str_contains($userAgent, 'android');
-@endphp
-
-
-<x-layouts::auth.simple :title="$team->name">
-    <div class="max-w-xl flex flex-col gap-4 mx-auto rounded-xl border border-border bg-card p-6 shadow-sm sm:p-8">
-
-        <p class="text-sm font-semibold text-brand">{{ $location->name }}</p>
-        <h1 class="mt-2 text-2xl font-semibold text-ink">{{ $team->name }}</h1>
-
-
-        <p>Añade tu tarjeta a la wallet y consigue recompensas</p>
-
-        {{-- Apple --}}
-        @if ($isApple)
-            <a  href="{{ route('wallet.card', ['qr_token' => $location->qr_token]) }}"
-                class="flex w-full items-center justify-center gap-3 rounded-xl
-              bg-black px-4 py-4 text-sm font-semibold text-white
-              transition hover:bg-gray-800">
-                <span>Añadir a Apple Wallet</span>
+<x-layouts::auth.simple :title="$pageTitle">
+    <div class="min-h-screen bg-background text-ink">
+        <header class="flex items-center justify-between border-b border-border px-5 py-5 sm:px-10">
+            <span class="text-xs font-bold uppercase tracking-[0.18em] text-ink2">FIDENTTA</span>
+            <span class="text-sm font-semibold">{{ $location->name }}</span>
+        </header>
+        <main class="mx-auto max-w-3xl px-5 pb-16 pt-12 sm:px-10 sm:pt-20">
+            <p class="text-xs font-bold uppercase tracking-[0.18em] text-fidentta-teal">{{ $team->name }}</p>
+            <h1 class="mt-3 max-w-2xl text-4xl leading-tight text-ink sm:text-5xl">{{ $pageTitle }}</h1>
+            <p class="mt-4 max-w-xl text-base leading-7 text-ink2">Únete al programa de fidelidad y convierte cada visita
+                en una recompensa.</p>
+            <a href="{{ route('wallet.card', ['qr_token' => $location->qr_token]) }}"
+                class="mt-8 inline-flex min-h-14 items-center justify-between gap-8 bg-ink px-5 py-4 text-sm font-bold text-paper transition hover:bg-fidentta-teal hover:text-ink">
+                Crear mi tarjeta <span aria-hidden="true">&rarr;</span>
             </a>
 
-            {{-- Android --}}
-        @elseif ($isAndroid)
-            <a  href="{{ route('wallet.card', ['qr_token' => $location->qr_token]) }}"
-                class="flex w-full items-center justify-center gap-3 rounded-xl
-              border border-border bg-card px-4 py-4 text-sm
-              font-semibold text-ink transition hover:bg-brand-soft">
-                <span>Añadir a Google Wallet</span>
-            </a>
-
-            {{-- Ordenador u otros dispositivos --}}
-        @else
-            <div class="space-y-3">
-            <a  href="{{ route('wallet.card', ['qr_token' => $location->qr_token]) }}"
-                    class="flex w-full items-center justify-center rounded-xl
-                  bg-black px-4 py-4 text-sm font-semibold text-white">
-                    Añadir a Apple Wallet
-                </a>
-
-            <a  href="{{ route('wallet.card', ['qr_token' => $location->qr_token]) }}"
-                    class="flex w-full items-center justify-center rounded-xl
-                  border border-border bg-card px-4 py-4 text-sm
-                  font-semibold text-ink">
-                    Añadir a Google Wallet
-                </a>
-            </div>
-        @endif
+            @if ($location->businessPageLinks->isNotEmpty())
+                <section class="mt-16 border-t border-border pt-6">
+                    <h2 class="text-xs font-bold uppercase tracking-[0.16em] text-ink2">También estamos aquí</h2>
+                    <ul class="mt-4 divide-y divide-border">
+                        @foreach ($location->businessPageLinks as $link)
+                            @php
+                                $icon = match ($link->icon) {
+                                    'instagram' => '◎',
+                                    'facebook' => 'f',
+                                    'tiktok' => '♪',
+                                    'whatsapp' => '◉',
+                                    'map' => '⌖',
+                                    default => '↗',
+                                };
+                            @endphp
+                            <li>
+                                <a href="{{ $link->url }}" target="_blank" rel="noopener noreferrer"
+                                    class="flex items-center gap-4 py-4 text-sm font-semibold text-ink transition hover:text-fidentta-teal">
+                                    <span aria-hidden="true"
+                                        class="flex h-10 w-10 items-center justify-center border border-border text-lg">{{ $icon }}</span>
+                                    <span class="min-w-0 flex-1 truncate">{{ $link->name }}</span>
+                                    <span aria-hidden="true" class="text-ink2">↗</span>
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                </section>
+            @endif
+            @if ($location->address)
+                <footer class="mt-14 border-t border-border pt-5 text-sm text-ink2">{{ $location->address }}</footer>
+            @endif
+        </main>
     </div>
 </x-layouts::auth.simple>

@@ -12,7 +12,9 @@ test('teams index page can be rendered', function () {
         ->actingAs($user)
         ->get(route('teams.index'));
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertSee('Inicio')
+        ->assertSee('Clientes');
 });
 
 test('teams can be created', function () {

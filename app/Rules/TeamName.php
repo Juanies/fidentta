@@ -20,7 +20,7 @@ class TeamName implements ValidationRule
         $name = strtolower(trim($value));
 
         if (in_array($name, $this->reservedNames(), true)) {
-            $fail(__('This team name is reserved and cannot be used.'));
+            $fail(__('Este nombre de equipo está reservado y no se puede utilizar.'));
         }
     }
 
@@ -31,7 +31,7 @@ class TeamName implements ValidationRule
      */
     protected function reservedNames(): array
     {
-        return once(fn () => collect($this->routesPrefixes())
+        return once(fn() => collect($this->routesPrefixes())
             ->merge([
                 '300',
                 '302',
@@ -376,10 +376,10 @@ class TeamName implements ValidationRule
     protected function routesPrefixes(): array
     {
         return collect(Route::getRoutes()->getRoutes())
-            ->map(fn (RouteElement $route) => $route->uri)
-            ->map(fn (string $uri) => explode('/', $uri)[0])
-            ->reject(fn (string $uri) => str_contains($uri, '{'))
-            ->filter(fn (string $uri) => $uri !== '')
+            ->map(fn(RouteElement $route) => $route->uri)
+            ->map(fn(string $uri) => explode('/', $uri)[0])
+            ->reject(fn(string $uri) => str_contains($uri, '{'))
+            ->filter(fn(string $uri) => $uri !== '')
             ->unique()
             ->sort()
             ->values()

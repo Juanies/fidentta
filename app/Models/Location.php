@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 
 use Illuminate\Support\Str;
 
-#[Fillable(['id', 'team_id', 'name', 'qr_token', 'address', 'is_active', 'long', 'lat'])]
+#[Fillable(['id', 'team_id', 'name', 'page_link_name', 'qr_token', 'address', 'is_active', 'long', 'lat'])]
 
 class Location extends Model
 {
@@ -28,6 +28,11 @@ class Location extends Model
     public function customerUsers()
     {
         return $this->hasMany(CustomerUser::class);
+    }
+
+    public function businessPageLinks()
+    {
+        return $this->hasMany(BusinessPageLink::class)->orderBy('id');
     }
 
     protected static function booted(): void

@@ -15,7 +15,7 @@
         <livewire:team-switcher />
 
         <flux:sidebar.nav class="">
-            <flux:sidebar.group :heading="__('Platform')" class="grid text-white">
+            <flux:sidebar.group :heading="__('Plataforma')" class="grid text-white">
                 <flux:sidebar.item icon="home"
                     :href="route('dashboard', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
                     :current="request()->routeIs('dashboard')"
@@ -35,7 +35,7 @@
                     :current="request()->routeIs('dashboard.fidelizacion')"
                     class="text-white/80! hover:bg-fidentta-cyan/15! hover:text-white! data-current:bg-fidentta-cyan/25! data-current:text-fidentta-cyan!"
                     wire:navigate>
-                    {{ __('Fidelizacion') }}
+                    {{ __('Fidelización') }}
                 </flux:sidebar.item>
                 <flux:sidebar.item icon="credit-card"
                     :href="route('dashboard.tarjeta', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
@@ -49,7 +49,7 @@
                     :current="request()->routeIs('dashboard.configuracion')"
                     class="text-white/80! hover:bg-fidentta-cyan/15! hover:text-white! data-current:bg-fidentta-cyan/25! data-current:text-fidentta-cyan!"
                     wire:navigate>
-                    {{ __('Configuracion') }}
+                    {{ __('Configuración') }}
                 </flux:sidebar.item>
                 <flux:sidebar.item icon="building-storefront" aria-hidden="true"
                     :href="route('dashboard.locales', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
@@ -64,7 +64,7 @@
 
 
 
-            <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
+        <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
     </flux:sidebar>
 
     <!-- Mobile User Menu -->

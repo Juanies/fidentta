@@ -11,6 +11,7 @@ new class extends Component {
     public $team;
     public string $locationId = '';
     public string $search = '';
+    public string $stampFilter = 'all';
     public ?string $statusMessage = null;
     public int $rewardGoal = 8;
 
@@ -25,6 +26,13 @@ new class extends Component {
     {
         if ($this->locationId !== '' && !$this->team->locations()->whereKey($this->locationId)->exists()) {
             $this->locationId = '';
+        }
+    }
+
+    public function updatedStampFilter(): void
+    {
+        if (!in_array($this->stampFilter, ['all', 'completed'], true)) {
+            $this->stampFilter = 'all';
         }
     }
 
@@ -129,7 +137,13 @@ new class extends Component {
 
     public function getCustomersProperty()
     {
-        return $this->customersQuery()
+        $query = $this->customersQuery();
+
+        if ($this->stampFilter === 'completed') {
+            $query->whereHas('cards', fn($cards) => $cards->where('is_active', true)->where('stamps_collected', '>=', $this->rewardGoal));
+        }
+
+        return $query
             ->withCount(['cards', 'cards as active_cards_count' => fn($cards) => $cards->where('is_active', true)])
             ->withSum('cards as stamps_total', 'stamps_collected')
             ->with(['registrationValues.field', 'location', 'cards' => fn($cards) => $cards->where('is_active', true), 'mobilePasses.registrations', 'mobilePasses.googleEvents'])
@@ -159,6 +173,12 @@ new class extends Component {
                 @foreach ($this->locations as $location)
                     <option value="{{ $location->id }}">{{ $location->name }}</option>
                 @endforeach
+            </select>
+            <label class="sr-only" for="customers-stamps">Filtrar por progreso</label>
+            <select id="customers-stamps" wire:model.live="stampFilter"
+                class="border-b-2 border-ink bg-transparent px-1 py-2 text-sm font-medium text-ink focus:border-fidentta-teal focus:outline-none">
+                <option value="all">Todos los clientes</option>
+                <option value="completed">Sellos completados</option>
             </select>
         </div>
     </header>
@@ -215,7 +235,8 @@ new class extends Component {
                     $displayName = $nameValue ?: ($cliente->email ?: 'Invitado #' . $cliente->id);
                     $activeCard = $cliente->cards->first();
                     $stamps = (int) ($activeCard?->stamps_collected ?? 0);
-                    $progress = min(100, (int) round(($stamps / $rewardGoal) * 100));
+                    $displayStamps = min($stamps, $rewardGoal);
+                    $progress = min(100, (int) round(($displayStamps / $rewardGoal) * 100));
                     $completed = $activeCard !== null && $stamps >= $rewardGoal;
                 @endphp
                 <li class="flex items-center justify-between gap-4 py-4">
@@ -236,11 +257,11 @@ new class extends Component {
                             @if ($activeCard)
                                 <div class="mt-2 flex items-center gap-2">
                                     <div class="h-1.5 w-28 bg-border" role="img"
-                                        aria-label="{{ $stamps }} de {{ $rewardGoal }} sellos">
+                                        aria-label="{{ $displayStamps }} de {{ $rewardGoal }} sellos">
                                         <div class="h-1.5 bg-fidentta-teal" style="width: {{ $progress }}%"></div>
                                     </div>
                                     <span
-                                        class="text-[11px] font-semibold text-ink2 tabular-nums">{{ $stamps }}/{{ $rewardGoal }}</span>
+                                        class="text-[11px] font-semibold text-ink2 tabular-nums">{{ $displayStamps }}/{{ $rewardGoal }}</span>
                                 </div>
                             @endif
                         </div>

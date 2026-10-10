@@ -27,6 +27,17 @@ function createRegistrationLocation(string $mode): Location
     ]);
 }
 
+test('location qr includes the Fidentta logo', function () {
+    $location = createRegistrationLocation('none');
+
+    $response = $this->get(route('location.qr', $location));
+
+    $response->assertOk()
+        ->assertHeader('Content-Type', 'image/svg+xml')
+        ->assertSee('<image', false)
+        ->assertSee('data:image/png;base64,', false);
+});
+
 test('none mode creates a guest customer without personal data and one card', function () {
     $location = createRegistrationLocation('none');
 

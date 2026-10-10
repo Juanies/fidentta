@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('team_id')->cascadeOnDelete();
             $table->foreignId('location_id')->cascadeOnDelete();
-                $table->string('url');
-                $table->string('icon')->nullable();
-                $table->string('name')->nullable();
+            $table->string('url');
+            $table->string('icon')->nullable();
+            $table->string('name')->nullable();
             $table->timestamps();
         });
     }

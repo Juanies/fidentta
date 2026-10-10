@@ -24,7 +24,7 @@ new class extends Component {
     #[Computed]
     public function deleteConfirmLabel(): string
     {
-        return __('Type ":name" to confirm', ['name' => $this->team->name]);
+        return __('Escribe ":name" para confirmar', ['name' => $this->team->name]);
     }
 
     public function deleteTeam(): void
@@ -36,21 +36,17 @@ new class extends Component {
         ]);
 
         if ($validated['deleteName'] !== $this->team->name) {
-            $this->addError('deleteName', __('The team name does not match.'));
+            $this->addError('deleteName', __('El nombre del equipo no coincide.'));
 
             return;
         }
 
         $user = Auth::user();
 
-        $fallbackTeam = $user->isCurrentTeam($this->team)
-            ? $user->fallbackTeam($this->team)
-            : null;
+        $fallbackTeam = $user->isCurrentTeam($this->team) ? $user->fallbackTeam($this->team) : null;
 
         DB::transaction(function () use ($user) {
-            User::where('current_team_id', $this->team->id)
-                ->where('id', '!=', $user->id)
-                ->each(fn (User $affectedUser) => $affectedUser->switchTeam($affectedUser->personalTeam()));
+            User::where('current_team_id', $this->team->id)->where('id', '!=', $user->id)->each(fn(User $affectedUser) => $affectedUser->switchTeam($affectedUser->personalTeam()));
 
             $this->team->invitations()->delete();
             $this->team->memberships()->delete();
@@ -61,7 +57,7 @@ new class extends Component {
             $user->switchTeam($fallbackTeam);
         }
 
-        Flux::toast(variant: 'success', text: __('Team deleted.'));
+        Flux::toast(variant: 'success', text: __('Equipo eliminado.'));
 
         $this->redirectRoute('teams.index', navigate: true);
     }
@@ -79,22 +75,23 @@ new class extends Component {
 <flux:modal name="delete-team" :show="$errors->isNotEmpty()" focusable class="max-w-lg">
     <form wire:submit="deleteTeam" class="space-y-6">
         <div>
-            <flux:heading size="lg">{{ __('Are you sure?') }}</flux:heading>
+            <flux:heading size="lg">{{ __('¿Seguro que quieres continuar?') }}</flux:heading>
             <flux:subheading>
-                {{ __('This action cannot be undone. This will permanently delete the team ":name".', ['name' => $team->name]) }}
+                {{ __('Esta acción no se puede deshacer. Se eliminará permanentemente el equipo ":name".', ['name' => $team->name]) }}
             </flux:subheading>
         </div>
 
         <div class="space-y-4">
-            <flux:input wire:model="deleteName" :label="$this->deleteConfirmLabel" required data-test="delete-team-name" />
+            <flux:input wire:model="deleteName" :label="$this->deleteConfirmLabel" required
+                data-test="delete-team-name" />
         </div>
 
         <div class="flex justify-end space-x-2 rtl:space-x-reverse">
             <flux:modal.close>
-                <flux:button variant="filled">{{ __('Cancel') }}</flux:button>
+                <flux:button variant="filled">{{ __('Cancelar') }}</flux:button>
             </flux:modal.close>
             <flux:button variant="danger" type="submit" data-test="delete-team-confirm">
-                {{ __('Delete team') }}
+                {{ __('Eliminar equipo') }}
             </flux:button>
         </div>
     </form>

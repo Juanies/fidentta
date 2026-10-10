@@ -1,4 +1,4 @@
-@if (request()->routeIs('*dashboard*', 'locations.index'))
+@if (request()->routeIs('*dashboard*', 'locations.index', 'profile.edit', 'security.edit', 'appearance.edit', 'teams.*'))
     <x-layouts::app.sidebar :title="$title ?? null">
         {{ $slot }}
     </x-layouts::app.sidebar>

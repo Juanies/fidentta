@@ -179,20 +179,17 @@ new class extends Component {
     public function cambiarPaleta(string $slug)
     {
         $this->paletaSeleccionada = $slug;
+        $this->getColor();
         $this->persistPaleta();
     }
 
     public function updatedColorPrincipal(): void
     {
+        $this->colorTexto = $this->recomendarColorTexto($this->colorPrincipal);
         $this->persistPaleta();
     }
 
     public function updatedColorSecundario(): void
-    {
-        $this->persistPaleta();
-    }
-
-    public function updatedColorTexto(): void
     {
         $this->persistPaleta();
     }
@@ -212,7 +209,28 @@ new class extends Component {
 
         $this->colorPrincipal = $paleta['colores'][0] ?? '#7C2D12';
         $this->colorSecundario = $paleta['colores'][1] ?? '#F59E0B';
-        $this->colorTexto = $paleta['texto'] ?? '#F8FAFC';
+        $this->colorTexto = $this->recomendarColorTexto($this->colorPrincipal);
+    }
+
+    public function recomendarColorTexto(string $color): string
+    {
+        $hex = ltrim($color, '#');
+
+        if (!preg_match('/^[0-9a-f]{6}$/i', $hex)) {
+            return '#FFFFFF';
+        }
+
+        $channels = array_map(static function (string $channel): float {
+            $value = hexdec($channel) / 255;
+
+            return $value <= 0.04045 ? $value / 12.92 : (($value + 0.055) / 1.055) ** 2.4;
+        }, str_split($hex, 2));
+
+        $luminance = 0.2126 * $channels[0] + 0.7152 * $channels[1] + 0.0722 * $channels[2];
+        $whiteContrast = 1.05 / ($luminance + 0.05);
+        $inkContrast = ($luminance + 0.05) / 0.05;
+
+        return $whiteContrast >= $inkContrast ? '#FFFFFF' : '#14211D';
     }
 
     public function sincronizarColoresDesdePaleta(): void
@@ -235,6 +253,8 @@ new class extends Component {
             ]);
 
         $tipo = $this->isPersonalizado ? 'personalizado' : 'preseleccionado';
+        $background = $this->isPersonalizado ? $this->colorPrincipal : $basePaleta['colores'][0] ?? '#7C2D12';
+        $textColor = $this->recomendarColorTexto($background);
 
         return [
             'slug' => $this->paletaSeleccionada,
@@ -242,9 +262,9 @@ new class extends Component {
             'isPersonalizado' => $this->isPersonalizado,
             'colorPrincipal' => $this->isPersonalizado ? $this->colorPrincipal : $basePaleta['colores'][0] ?? '#7C2D12',
             'colorSecundario' => $this->isPersonalizado ? $this->colorSecundario : $basePaleta['colores'][1] ?? '#F59E0B',
-            'colorTexto' => $this->isPersonalizado ? $this->colorTexto : $basePaleta['texto'] ?? '#F8FAFC',
-            'texto' => $this->isPersonalizado ? $this->colorTexto : $basePaleta['texto'] ?? '#F8FAFC',
-            'fondo' => $this->isPersonalizado ? "linear-gradient(135deg, {$this->colorPrincipal} 0%, {$this->colorSecundario} 100%)" : $basePaleta['fondo'] ?? "linear-gradient(135deg, {$this->colorPrincipal} 0%, {$this->colorSecundario} 100%)",
+            'colorTexto' => $textColor,
+            'texto' => $textColor,
+            'fondo' => $background,
             'nombre' => $basePaleta['nombre'] ?? 'Personalizada',
             'descripcion' => $basePaleta['descripcion'] ?? 'Paleta personalizada',
         ];
@@ -270,11 +290,11 @@ new class extends Component {
 
     <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-5">
         <div class="flex flex-col items-start gap-4 lg:col-span-3">
-            <div class="flex rounded-full bg-fidentta-blue/90 p-1.5 shadow-lg shadow-fidentta-blue/20">
+            <div class="inline-flex rounded-lg border border-border bg-background p-1">
                 <label class="relative flex-1 cursor-pointer">
                     <input type="radio" value="0" wire:model.live="isPersonalizado" class="peer sr-only" />
                     <span
-                        class="flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 peer-checked:bg-brand peer-checked:text-white {{ !$isPersonalizado ? 'bg-brand text-white' : 'text-muted-foreground hover:text-ink' }}">
+                        class="flex items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-all duration-200 peer-checked:bg-brand peer-checked:text-white {{ !$isPersonalizado ? 'bg-brand text-white' : 'text-muted-foreground hover:text-ink' }}">
                         Preseleccionado
                     </span>
                 </label>
@@ -282,64 +302,58 @@ new class extends Component {
                 <label class="relative flex-1 cursor-pointer">
                     <input type="radio" value="1" wire:model.live="isPersonalizado" class="peer sr-only" />
                     <span
-                        class="flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 peer-checked:bg-brand peer-checked:text-white {{ $isPersonalizado ? 'bg-brand text-white' : 'text-muted-foreground hover:text-ink' }}">
+                        class="flex items-center justify-center rounded-md px-4 py-2 text-sm font-semibold transition-all duration-200 peer-checked:bg-brand peer-checked:text-white {{ $isPersonalizado ? 'bg-brand text-white' : 'text-muted-foreground hover:text-ink' }}">
                         Personalizado
                     </span>
                 </label>
             </div>
             @if ($isPersonalizado)
                 <div class="w-full rounded-xl border border-border bg-card p-4">
-                    <p class="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-fidentta-cyan">Personaliza la
-                        tarjeta</p>
-                    <div class="grid gap-4 sm:grid-cols-3">
+                    <div class="mb-4">
+                        <h3 class="text-base font-semibold text-ink">Personaliza el color</h3>
+                        <p class="mt-1 text-sm leading-6 text-muted-foreground">Usaremos un solo color de fondo y
+                            ajustaremos el texto para que se lea bien.</p>
+                    </div>
+                    <div class="grid gap-3 sm:grid-cols-2">
                         <label class="block rounded-lg border border-border bg-background p-3">
-                            <span
-                                class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-text-secondary/70">Principal</span>
+                            <span class="mb-2 block text-sm font-medium text-ink">Fondo de la tarjeta</span>
                             <input type="color" wire:model.live="colorPrincipal" value="{{ $colorPrincipal }}"
                                 class="h-12 w-full cursor-pointer rounded-lg border-0 bg-transparent p-0" />
                         </label>
 
                         <label class="block rounded-lg border border-border bg-background p-3">
-                            <span
-                                class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-text-secondary/70">Secundario</span>
+                            <span class="mb-2 block text-sm font-medium text-ink">Color de acento</span>
                             <input type="color" wire:model.live="colorSecundario" value="{{ $colorSecundario }}"
                                 class="h-12 w-full cursor-pointer rounded-lg border-0 bg-transparent p-0" />
                         </label>
-
-                        <label class="block rounded-lg border border-border bg-background p-3">
-                            <span
-                                class="mb-2 block text-xs font-medium uppercase tracking-[0.18em] text-text-secondary/70">Texto</span>
-                            <input type="color" wire:model.live="colorTexto" value="{{ $colorTexto }}"
-                                class="h-12 w-full cursor-pointer rounded-lg border-0 bg-transparent p-0" />
-                        </label>
                     </div>
+                    <p class="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                        <span class="size-4 rounded border border-border"
+                            style="background-color: {{ $colorTexto }}"></span>
+                        Texto recomendado: <span
+                            class="font-semibold text-ink">{{ $colorTexto === '#FFFFFF' ? 'blanco' : 'tinta oscura' }}</span>
+                    </p>
                 </div>
             @else
                 <div class="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
                     @foreach ($paletasExtras as $paleta)
-                        <div wire:click="cambiarPaleta('{{ $paleta['slug'] }}')"
-                            class="relative flex h-24 w-full cursor-pointer flex-col justify-between rounded-lg p-3 text-sm font-medium shadow-sm transition hover:-translate-y-0.5 sm:p-4 {{ $paletaSeleccionada === $paleta['slug'] ? 'ring-2 ring-brand ring-offset-2' : '' }}"
-                            style="background: {{ $paleta['colores'][0] }}; color: {{ $paleta['texto'] }};">
-                            <div class="flex gap-2">
+                        <button type="button" wire:click="cambiarPaleta('{{ $paleta['slug'] }}')"
+                            aria-pressed="{{ $paletaSeleccionada === $paleta['slug'] ? 'true' : 'false' }}"
+                            class="relative flex h-24 w-full flex-col justify-between rounded-lg border border-black/10 p-3 text-left text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 sm:p-4 {{ $paletaSeleccionada === $paleta['slug'] ? 'ring-2 ring-brand ring-offset-2' : '' }}"
+                            style="background-color: {{ $paleta['colores'][0] }}; color: {{ $this->recomendarColorTexto($paleta['colores'][0]) }};">
+                            <span class="flex gap-2" aria-hidden="true">
                                 @foreach (array_slice($paleta['colores'], 1, 2) as $color)
-                                    <div class="w-2/5 h-3 rounded-full" style="background-color: {{ $color }};">
-                                    </div>
+                                    <span class="h-3 w-8 rounded-full border border-black/10"
+                                        style="background-color: {{ $color }}"></span>
                                 @endforeach
-                            </div>
-
-                            {{ $paleta['nombre'] }}
+                            </span>
+                            <span>{{ $paleta['nombre'] }}</span>
 
                             @if ($paletaSeleccionada === $paleta['slug'])
-                                <div
-                                    class="absolute top-0 right-0 m-4 flex items-center justify-center rounded-full w-5 h-5 bg-white">
-                                    <svg class="w-3 h-3" viewBox="0 0 18 14" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M1 7L7 13L17 1" stroke="black" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round" />
-                                    </svg>
-                                </div>
+                                <span
+                                    class="absolute right-3 top-3 rounded-full bg-white px-2 py-1 text-xs font-semibold text-ink">Elegida</span>
                             @endif
-                        </div>
+                        </button>
                     @endforeach
                 </div>
                 <!--Colores seleccionados -->
@@ -350,29 +364,23 @@ new class extends Component {
                 </div>
                 <div class="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
                     @foreach ($paletas as $paleta)
-                        <div wire:click="cambiarPaleta('{{ $paleta['slug'] }}')"
-                            class="relative flex h-24 w-full cursor-pointer flex-col justify-between rounded-lg p-3 text-sm font-medium shadow-sm transition hover:-translate-y-0.5 sm:p-4 {{ $paletaSeleccionada === $paleta['slug'] ? 'ring-2 ring-brand ring-offset-2' : '' }}"
-                            style="background: linear-gradient(135deg, {{ implode(', ', $paleta['colores']) }}); color: {{ $paleta['texto'] }};">
-                            <div class="flex gap-2">
+                        <button type="button" wire:click="cambiarPaleta('{{ $paleta['slug'] }}')"
+                            aria-pressed="{{ $paletaSeleccionada === $paleta['slug'] ? 'true' : 'false' }}"
+                            class="relative flex h-24 w-full flex-col justify-between rounded-lg border border-black/10 p-3 text-left text-sm font-semibold shadow-sm transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 sm:p-4 {{ $paletaSeleccionada === $paleta['slug'] ? 'ring-2 ring-brand ring-offset-2' : '' }}"
+                            style="background-color: {{ $paleta['colores'][0] }}; color: {{ $this->recomendarColorTexto($paleta['colores'][0]) }};">
+                            <span class="flex gap-2" aria-hidden="true">
                                 @foreach ($paleta['colores'] as $color)
-                                    <div class="w-2/5 h-3 rounded-full" style="background-color: {{ $color }};">
-                                    </div>
+                                    <span class="h-3 w-8 rounded-full border border-black/10"
+                                        style="background-color: {{ $color }}"></span>
                                 @endforeach
-                            </div>
-
-                            {{ $paleta['nombre'] }}
+                            </span>
+                            <span>{{ $paleta['nombre'] }}</span>
 
                             @if ($paletaSeleccionada === $paleta['slug'])
-                                <div
-                                    class="absolute top-0 right-0 m-4 flex items-center justify-center rounded-full w-5 h-5 bg-white">
-                                    <svg class="w-3 h-3" viewBox="0 0 18 14" fill="none"
-                                        xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M1 7L7 13L17 1" stroke="black" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round" />
-                                    </svg>
-                                </div>
+                                <span
+                                    class="absolute right-3 top-3 rounded-full bg-white px-2 py-1 text-xs font-semibold text-ink">Elegida</span>
                             @endif
-                        </div>
+                        </button>
                     @endforeach
 
                 </div>
@@ -383,15 +391,7 @@ new class extends Component {
         <div class="lg:col-span-2">
             @php
                 $sellosPreview = $this->registro['sellos'] ?? 8;
-                $previewBackground =
-                    $this->registro['paleta']['fondo'] ??
-                    ($this->isPersonalizado
-                        ? 'linear-gradient(135deg, ' .
-                            $this->colorPrincipal .
-                            ' 0%, ' .
-                            $this->colorSecundario .
-                            ' 100%)'
-                        : 'linear-gradient(135deg, #7C2D12 0%, #B45309 38%, #F59E0B 100%)');
+                $previewBackground = $this->registro['paleta']['fondo'] ?? '#7C2D12';
 
                 $previewTextColor =
                     $this->registro['paleta']['texto'] ?? ($this->isPersonalizado ? $this->colorTexto : '#F8FAFC');
@@ -399,8 +399,8 @@ new class extends Component {
                 $logoUrl = $logoInfo['url'] ?? null;
             @endphp
 
-            <div class="rounded-2xl border border-white/10 p-4 h-fit shadow-2xl shadow-fidentta-purple/10"
-                style="background: {{ $previewBackground }}; color: {{ $previewTextColor }};">
+            <div class="h-fit rounded-xl border border-black/10 p-4 shadow-lg sm:p-5"
+                style="background-color: {{ $previewBackground }}; color: {{ $previewTextColor }};">
                 <div class="flex items-center gap-4">
                     @if ($logoUrl)
                         <img src="{{ $logoUrl }}" alt="Logo del negocio"

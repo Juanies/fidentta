@@ -12,7 +12,7 @@ use App\Http\Controllers\SubscriptionSuccess;
 
 
 Route::livewire('/', 'pages::inicio')->name('home');
-Route::livewire('/registera', 'pages::register')->name('registera')->middleware(IsRegistered::class);
+Route::livewire('/register', 'pages::register')->name('register')->middleware(IsRegistered::class);
 
 Route::get(
     '/locations/{location}/qr',

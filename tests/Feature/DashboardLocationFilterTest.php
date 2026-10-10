@@ -131,6 +131,134 @@ test('customers page filters the list with the search input', function () {
         ->assertDontSee('otro.cliente@example.com');
 });
 
+test('customers page can filter cards that have completed their stamp goal', function () {
+    $user = makeDashboardFilterUser();
+    $team = $user->currentTeam;
+    $location = Location::create([
+        'team_id' => $team->id,
+        'name' => 'Local Centro',
+        'is_active' => true,
+    ]);
+    $design = $team->cardDesign()->create([
+        'is_active' => true,
+        'color_scheme' => [],
+        'stamps_required' => 6,
+        'reward' => 'Café',
+    ]);
+
+    foreach ([['completo@example.com', 6], ['pendiente@example.com', 4]] as [$email, $stamps]) {
+        $customer = CustomerUser::create([
+            'team_id' => $team->id,
+            'location_id' => $location->id,
+            'email' => $email,
+            'guest' => false,
+        ]);
+        $customer->cards()->create([
+            'team_id' => $team->id,
+            'card_design_id' => $design->id,
+            'stamps_collected' => $stamps,
+            'is_active' => true,
+        ]);
+    }
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::dashboard.clientes')
+        ->set('stampFilter', 'completed')
+        ->assertSee('completo@example.com')
+        ->assertDontSee('pendiente@example.com');
+});
+
+test('reducing the stamp goal never displays an overfull count or negative remaining stamps', function () {
+    $user = makeDashboardFilterUser();
+    $team = $user->currentTeam;
+    $location = Location::create([
+        'team_id' => $team->id,
+        'name' => 'Local Centro',
+        'is_active' => true,
+    ]);
+    $design = $team->cardDesign()->create([
+        'is_active' => true,
+        'color_scheme' => [],
+        'stamps_required' => 6,
+        'reward' => 'Café',
+    ]);
+    $customer = CustomerUser::create([
+        'team_id' => $team->id,
+        'location_id' => $location->id,
+        'email' => 'sobrecompleto@example.com',
+        'guest' => false,
+    ]);
+    $customer->cards()->create([
+        'team_id' => $team->id,
+        'card_design_id' => $design->id,
+        'stamps_collected' => 8,
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::dashboard.clientes')
+        ->assertSee('6/6')
+        ->assertDontSee('8/6')
+        ->set('locationId', (string) $location->id)
+        ->call('addStamp', $customer->id)
+        ->assertSee('Esta tarjeta ya completó los sellos requeridos.')
+        ->assertDontSee('-2 sellos');
+});
+
+test('public page link renders its configured title and links', function () {
+    $user = makeDashboardFilterUser();
+    $team = $user->currentTeam;
+    $location = Location::create([
+        'team_id' => $team->id,
+        'name' => 'Local Centro',
+        'page_link_name' => 'Café del Centro',
+        'is_active' => true,
+    ]);
+    $location->businessPageLinks()->create([
+        'team_id' => $team->id,
+        'name' => 'Instagram',
+        'url' => 'https://instagram.com/cafecentro',
+        'icon' => 'instagram',
+    ]);
+
+    $this->get(route('wallet.links', ['qr_token' => $location->qr_token]))
+        ->assertOk()
+        ->assertSee('Café del Centro')
+        ->assertSee('https://instagram.com/cafecentro')
+        ->assertSee(route('wallet.card', ['qr_token' => $location->qr_token]), false);
+
+    $this->get(route('wallet.card', ['qr_token' => $location->qr_token]))
+        ->assertOk()
+        ->assertSee('Únete a');
+});
+
+test('location page editor saves its title and external links', function () {
+    $user = makeDashboardFilterUser();
+    $team = $user->currentTeam;
+    $location = Location::create([
+        'team_id' => $team->id,
+        'name' => 'Local Centro',
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::dashboard.location.show', ['id' => $location->id])
+        ->call('addPageLink')
+        ->set('pageLinkName', 'Café del Centro')
+        ->set('links.0.name', 'Instagram')
+        ->set('links.0.url', 'https://instagram.com/cafecentro')
+        ->set('links.0.icon', 'instagram')
+        ->call('guardarPageLink')
+        ->assertHasNoErrors();
+
+    expect($location->fresh()->page_link_name)->toBe('Café del Centro')
+        ->and($location->businessPageLinks()->first())
+        ->name->toBe('Instagram');
+});
+
 test('dashboard page renders its live metrics and activity with a location filter', function () {
     $user = makeDashboardFilterUser();
     $team = $user->currentTeam;

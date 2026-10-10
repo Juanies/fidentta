@@ -2,6 +2,8 @@
 
 @import "../../vendor/livewire/flux/dist/flux.css";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @source '../views';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -175,6 +177,9 @@ h2 {
     --ink2: oklch(0.43 0.017 265);
     --mint: rgb(0, 229, 149);
     --mintd: oklch(0.6 0.13 162);
+    --color-accent: var(--mint);
+    --color-accent-content: var(--ink);
+    --color-accent-foreground: var(--ink);
 
     /* Surfaces */
     --surface: oklch(1 0 0 / 70%);
@@ -218,4 +223,116 @@ h2 {
     );
 
     --ease-kinetic: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.landing-hero-shape {
+    position: absolute;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.landing-hero-shape--mint {
+    top: 8%;
+    right: -10rem;
+    width: min(45vw, 42rem);
+    aspect-ratio: 1;
+    border: 1px solid color-mix(in oklch, var(--mintd) 22%, transparent);
+    border-radius: 34% 66% 56% 44% / 40% 38% 62% 60%;
+    transform: rotate(-18deg);
+}
+
+.landing-hero-shape--coral {
+    right: 8%;
+    bottom: 5%;
+    width: 4rem;
+    aspect-ratio: 1;
+    background: #f2a38b;
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+    transform: rotate(18deg);
+}
+
+.landing-photo-frame {
+    aspect-ratio: 1.16 / 1;
+    background: var(--muted);
+}
+
+.landing-pass-card {
+    border: 1px solid color-mix(in oklch, var(--ink) 8%, transparent);
+}
+
+.landing-stamp {
+    display: grid;
+    aspect-ratio: 1;
+    place-items: center;
+    border: 1px dashed color-mix(in oklch, var(--ink) 20%, transparent);
+    border-radius: 0.45rem;
+    color: var(--ink);
+    font-size: 0.8rem;
+}
+
+.landing-stamp--filled {
+    border-color: var(--mint);
+    background: var(--mint);
+}
+
+.landing-feature-shape {
+    position: absolute;
+    top: -10rem;
+    right: -8rem;
+    width: min(48vw, 40rem);
+    aspect-ratio: 1;
+    border: 1px solid rgb(255 255 255 / 14%);
+    transform: rotate(35deg);
+}
+
+.landing-feature-shape::after {
+    position: absolute;
+    right: 14%;
+    bottom: 12%;
+    width: 38%;
+    aspect-ratio: 1;
+    background: var(--mint);
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+    content: "";
+}
+
+.landing-secondary-image {
+    aspect-ratio: 1.15 / 1;
+    background: rgb(255 255 255 / 12%);
+}
+
+.landing-cta-shape {
+    position: absolute;
+    top: -7rem;
+    right: 10%;
+    width: 18rem;
+    aspect-ratio: 1;
+    border: 1px solid rgb(20 39 36 / 20%);
+    transform: rotate(28deg);
+}
+
+.landing-reveal {
+    animation: landing-rise 700ms cubic-bezier(0.2, 0.7, 0.25, 1) both;
+}
+
+.landing-reveal--delay {
+    animation-delay: 120ms;
+}
+
+@keyframes landing-rise {
+    from {
+        opacity: 0;
+        transform: translateY(1rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .landing-reveal {
+        animation: none;
+    }
 }

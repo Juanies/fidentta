@@ -6,7 +6,19 @@ use Laravel\Fortify\Features;
 test('login screen can be rendered', function () {
     $response = $this->get(route('login'));
 
+    $response->assertOk()
+        ->assertSee(route('google.redirect'), false)
+        ->assertSee(route('register'), false);
+});
+
+test('registration route serves the custom onboarding', function () {
+    $response = $this->get(route('register', ['invitation' => 'invitation-code']));
+
     $response->assertOk();
+});
+
+test('Fortify default registration endpoint is disabled', function () {
+    $this->post('/register')->assertStatus(405);
 });
 
 test('users can authenticate using the login screen', function () {

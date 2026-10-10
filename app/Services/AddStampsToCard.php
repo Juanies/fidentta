@@ -50,10 +50,13 @@ class AddStampsToCard
             }
 
             $current = (int) $lockedCard->stamps_collected;
+            $remaining = max(0, $required - $current);
 
-            if ($current + $amount > $required) {
+            if ($amount > $remaining) {
                 throw ValidationException::withMessages([
-                    'amount' => "Solo quedan " . ($required - $current) . ' sellos para completar esta tarjeta.',
+                    'amount' => $remaining === 0
+                        ? 'Esta tarjeta ya completó los sellos requeridos.'
+                        : "Solo quedan {$remaining} sellos para completar esta tarjeta.",
                 ]);
             }
 

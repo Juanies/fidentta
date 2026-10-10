@@ -13,7 +13,11 @@ enum TeamRole: string
      */
     public function label(): string
     {
-        return ucfirst($this->value);
+        return match ($this) {
+            self::Owner => 'Propietario',
+            self::Admin => 'Administrador',
+            self::Member => 'Miembro',
+        };
     }
 
     /**
@@ -71,8 +75,8 @@ enum TeamRole: string
     public static function assignable(): array
     {
         return collect(self::cases())
-            ->filter(fn (self $role) => $role !== self::Owner)
-            ->map(fn (self $role) => ['value' => $role->value, 'label' => $role->label()])
+            ->filter(fn(self $role) => $role !== self::Owner)
+            ->map(fn(self $role) => ['value' => $role->value, 'label' => $role->label()])
             ->values()
             ->toArray();
     }

@@ -6,6 +6,12 @@ use App\Models\CustomerUser;
 use App\Models\Location;
 use App\Models\Team;
 use App\Models\card as LoyaltyCard;
+use App\Services\WalletStampProgress;
+use BaconQrCode\Common\ErrorCorrectionLevel;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,11 +23,6 @@ use Spatie\LaravelMobilePass\Builders\Google\LoyaltyPassClass;
 use Spatie\LaravelMobilePass\Enums\BarcodeType;
 use Spatie\LaravelMobilePass\Enums\PassType;
 use Spatie\LaravelMobilePass\Models\MobilePass;
-use App\Services\WalletStampProgress;
-use BaconQrCode\Renderer\ImageRenderer;
-use BaconQrCode\Renderer\RendererStyle\RendererStyle;
-use BaconQrCode\Renderer\Image\SvgImageBackEnd;
-use BaconQrCode\Writer;
 
 class Card extends Controller
 {
@@ -38,7 +39,7 @@ class Card extends Controller
         $team = $location->team;
         $mode = $this->registrationMode($team->customer_registration_type);
 
-        return view('wallet.page-links', [
+        return view('wallet.register', [
             'team' => $team,
             'location' => $location,
             'mode' => $mode,
@@ -46,10 +47,11 @@ class Card extends Controller
         ]);
     }
 
-    public function pageLinks(string $qr_token){
+    public function pageLinks(string $qr_token)
+    {
 
-       $location = Location::where('qr_token', $qr_token)
-            ->with(['team.customerRegistrationFields' => fn($query) => $query
+        $location = Location::where('qr_token', $qr_token)
+            ->with(['businessPageLinks', 'team.customerRegistrationFields' => fn($query) => $query
                 ->where('is_active', true)
                 ->orderBy('sort_order')])
             ->firstOrFail();
@@ -62,6 +64,7 @@ class Card extends Controller
         return view('wallet.page-links', [
             'team' => $team,
             'location' => $location,
+            'pageTitle' => $location->page_link_name ?: $team->name,
 
         ]);
     }
@@ -204,7 +207,7 @@ class Card extends Controller
 
     public function qr(Location $location)
     {
-        $url = route('wallet.card', [
+        $url = route('wallet.links', [
             'qr_token' => $location->qr_token,
         ]);
 
@@ -215,7 +218,34 @@ class Card extends Controller
 
         $writer = new Writer($renderer);
 
-        $qr = $writer->writeString($url);
+        $qr = $writer->writeString($url, ecLevel: ErrorCorrectionLevel::H());
+
+        $document = new \DOMDocument();
+        $document->loadXML($qr);
+
+        $svg = $document->documentElement;
+        $backing = $document->createElementNS('http://www.w3.org/2000/svg', 'rect');
+        $backing->setAttribute('x', '122');
+        $backing->setAttribute('y', '122');
+        $backing->setAttribute('width', '56');
+        $backing->setAttribute('height', '56');
+        $backing->setAttribute('rx', '10');
+        $backing->setAttribute('fill', '#ffffff');
+        $svg->appendChild($backing);
+
+        $logo = $document->createElementNS('http://www.w3.org/2000/svg', 'image');
+        $logo->setAttribute('x', '130');
+        $logo->setAttribute('y', '130');
+        $logo->setAttribute('width', '40');
+        $logo->setAttribute('height', '40');
+        $logo->setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        $logo->setAttribute(
+            'href',
+            'data:image/png;base64,' . base64_encode(file_get_contents(public_path('logo.png')))
+        );
+        $svg->appendChild($logo);
+
+        $qr = $document->saveXML($svg);
 
         return response($qr)
             ->header('Content-Type', 'image/svg+xml');

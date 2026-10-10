@@ -20,7 +20,7 @@ class isRegistered
 
             return $team
                 ? redirect()->route('dashboard', ['current_team' => $team->getRouteKey()])
-                : redirect()->route('registera');
+                : redirect()->route('register');
         }
 
 
