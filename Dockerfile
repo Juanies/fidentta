@@ -17,7 +17,7 @@ RUN composer dump-autoload \
     --optimize
 
 # Etapa 2: compilar assets del frontend
-FROM node:22-alpine AS assets
+FROM node:24-alpine AS assets
 WORKDIR /app
 
 COPY package*.json ./
