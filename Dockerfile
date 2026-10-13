@@ -6,6 +6,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libzip-dev \
     && docker-php-ext-install -j"$(nproc)" pdo_mysql bcmath exif intl zip curl \
     && a2enmod rewrite headers \
+    && printf '<Directory /var/www/html/public>\n    AllowOverride All\n    Require all granted\n</Directory>\n' > /etc/apache2/conf-available/laravel.conf \
+    && a2enconf laravel \
     && rm -rf /var/lib/apt/lists/*
 
 RUN php --ri mysqlnd | grep -q 'auth_plugin_caching_sha2_password'
