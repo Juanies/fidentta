@@ -14,7 +14,9 @@ return new class extends Migration
         Schema::create('customer_registration_values', function (Blueprint $table) {
             $table->id();
             $table->foreignId('customer_user_id')->constrained('customer_users')->cascadeOnDelete();
-            $table->foreignId('customer_registration_field_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('customer_registration_field_id')
+                ->constrained('customer_registration_fields', 'id', 'crv_field_fk')
+                ->cascadeOnDelete();
             $table->text('value')->nullable();
             $table->timestamps();
 
