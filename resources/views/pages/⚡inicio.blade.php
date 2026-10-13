@@ -36,6 +36,15 @@ new class extends Component {
         </div>
     </header>
 
+    @if (session('stripe_checkout_error'))
+        <div class="mx-auto mt-6 flex max-w-7xl flex-col gap-3 border-s-4 border-amber-500 bg-amber-50 px-5 py-4 text-amber-950 sm:flex-row sm:items-center sm:justify-between sm:px-8 lg:px-10"
+            role="alert">
+            <p>{{ session('stripe_checkout_error') }}</p>
+            <a href="{{ route('subscription-checkout') }}"
+                class="shrink-0 font-semibold underline underline-offset-4">Intentar de nuevo</a>
+        </div>
+    @endif
+
     <main>
         <section class="relative isolate overflow-hidden">
             <div class="landing-hero-shape landing-hero-shape--mint" aria-hidden="true"></div>

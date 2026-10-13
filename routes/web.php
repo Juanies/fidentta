@@ -8,6 +8,8 @@ use App\Http\Middleware\isRegistered as IsRegistered;
 use App\Http\Middleware\Subscribed;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Stripe\Exception\ApiConnectionException;
+use Stripe\Exception\ApiErrorException;
 
 Route::livewire('/', 'pages::inicio')->name('home');
 Route::livewire('/register', 'pages::register')->name('register')->middleware(IsRegistered::class);
@@ -53,16 +55,24 @@ Route::get('/subscription/success', [
 ])->middleware('auth')->name('subscription.success');
 
 Route::get('/subscription-checkout', function (Request $request) {
-    return $request->user()
-        ->newSubscription('fidentta', 'price_1UJfmrFW2Hwxc0Uk8mZTPfN1')
-        ->trialDays(5)
-        ->allowPromotionCodes()
-        ->checkout([
-            'success_url' => route('subscription.success'),
+    try {
+        return $request->user()
+            ->newSubscription('fidentta', 'price_1UJfmrFW2Hwxc0Uk8mZTPfN1')
+            ->trialDays(5)
+            ->allowPromotionCodes()
+            ->checkout([
+                'success_url' => route('subscription.success'),
+            ]);
+    } catch (ApiConnectionException | ApiErrorException $exception) {
+        report($exception);
 
-        ]);
+        return redirect()->route('home')->with(
+            'stripe_checkout_error',
+            'No se pudo iniciar el proceso de pago. No se ha completado ningún cobro. Inténtalo de nuevo en unos minutos.',
+        );
+    }
 })->middleware(['auth', IsRegistered::class])->name('subscription-checkout');
 
 Route::mobilePass();
 
-require __DIR__.'/settings.php';
+require __DIR__ . '/settings.php';
