@@ -1,34 +1,63 @@
-RUN apt-get update && apt-get install -y \
-    git curl unzil lib libzip-dev \
-    nginx nodejs npm \
-    && docker-php-ext-install pdo pdo-mysql zip
+FROM php:8.5-apache-bookworm AS php-base
 
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libcurl4-openssl-dev \
+    libicu-dev \
+    libzip-dev \
+    && docker-php-ext-install -j"$(nproc)" pdo_mysql bcmath exif intl zip curl \
+    && a2enmod rewrite headers \
+    && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
+RUN php --ri mysqlnd | grep -q 'auth_plugin_caching_sha2_password'
 
-COPY . .
+RUN sed -ri 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/*.conf
 
-RUN sed -i 's/;clear_env = yes/clear_env = no/' /usr/local/etc/php-fpm.d/www.conf
+FROM php-base AS vendor
 
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 
-RUN mkdir -p storage bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
-    && chown -R www-data:www-data  /app
+WORKDIR /var/www/html
+
+COPY composer.json composer.lock ./
 
 RUN composer install \
     --no-dev \
-    --no-interaction \
     --prefer-dist \
+    --no-interaction \
+    --no-progress \
     --no-scripts
 
-RUN php artisan package:discover
+COPY . .
 
-RUN npm install --legady-peer-deps
+RUN composer dump-autoload --no-dev --optimize --no-scripts \
+    && php artisan package:discover --ansi
+
+FROM node:24-alpine AS assets
+
+WORKDIR /app
+
+COPY package.json package-lock.json .npmrc ./
+
+RUN npm ci --no-audit
+
+COPY . .
+
+COPY --from=vendor /var/www/html/vendor ./vendor
+
 RUN npm run build
 
-RUN nginx.conf /etc/nginx/nginx.conf
+FROM php-base AS app
+
+WORKDIR /var/www/html
+
+COPY --from=vendor --chown=www-data:www-data /var/www/html /var/www/html
+
+COPY --from=assets --chown=www-data:www-data /app/public/build /var/www/html/public/build
+
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R ug+rwX storage bootstrap/cache
 
 EXPOSE 80
 
-CMD ["sh", "-c", "php-fpm -D && nginx -g 'daemon off;'"]
+CMD ["apache2-foreground"]
