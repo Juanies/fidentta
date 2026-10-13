@@ -10,6 +10,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Spatie\LaravelMobilePass\Events\MobilePassAdded;
 use Spatie\LaravelMobilePass\Events\MobilePassRemoved;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -40,6 +41,10 @@ class AppServiceProvider extends ServiceProvider
                 'wallet_removed_at' => now(),
             ])->saveQuietly();
         });
+
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
+        }
     }
 
     /**
