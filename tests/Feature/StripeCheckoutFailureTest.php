@@ -15,3 +15,15 @@ test('home shows a safe Stripe checkout error and retry link', function () {
         ->assertSee(route('subscription-checkout'), false)
         ->assertSee('Intentar de nuevo');
 });
+
+test('checkout returns a safe error when the Stripe price is missing', function () {
+    config(['cashier.price_id' => null]);
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('subscription-checkout'))
+        ->assertRedirect(route('home'))
+        ->assertSessionHas(
+            'stripe_checkout_error',
+            'El servicio de pago no está configurado. Inténtalo de nuevo más tarde.',
+        );
+});

@@ -55,15 +55,26 @@ Route::get('/subscription/success', [
 ])->middleware('auth')->name('subscription.success');
 
 Route::get('/subscription-checkout', function (Request $request) {
+    $priceId = config('cashier.price_id');
+
+    if (! is_string($priceId) || $priceId === '') {
+        report(new RuntimeException('Stripe price ID is not configured.'));
+
+        return redirect()->route('home')->with(
+            'stripe_checkout_error',
+            'El servicio de pago no está configurado. Inténtalo de nuevo más tarde.',
+        );
+    }
+
     try {
         return $request->user()
-            ->newSubscription('fidentta', 'price_1UJfmrFW2Hwxc0Uk8mZTPfN1')
+            ->newSubscription('fidentta', $priceId)
             ->trialDays(5)
             ->allowPromotionCodes()
             ->checkout([
                 'success_url' => route('subscription.success'),
             ]);
-    } catch (ApiConnectionException | ApiErrorException $exception) {
+    } catch (ApiConnectionException|ApiErrorException $exception) {
         report($exception);
 
         return redirect()->route('home')->with(
@@ -75,4 +86,4 @@ Route::get('/subscription-checkout', function (Request $request) {
 
 Route::mobilePass();
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

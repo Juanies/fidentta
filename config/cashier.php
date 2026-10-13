@@ -22,6 +22,8 @@ return [
 
     'secret' => env('STRIPE_SECRET'),
 
+    'price_id' => env('STRIPE_PRICE_ID'),
+
     /*
     |--------------------------------------------------------------------------
     | Cashier Path
