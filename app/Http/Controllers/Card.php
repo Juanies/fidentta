@@ -306,16 +306,17 @@ class Card extends Controller
             $backgroundColor = $colorScheme['colorPrincipal'] ?? '#2563EB';
             $requiredStamps = max(1, (int) $design?->stamps_required);
             $progress = WalletStampProgress::circles((int) $card->stamps_collected, $requiredStamps);
+            $logoPath = $this->teamLogoPath($card->team);
+            $iconPath = $logoPath ?? public_path('logo.png');
 
             if (! preg_match('/^#[0-9A-Fa-f]{6}$/', $backgroundColor)) {
                 $backgroundColor = '#2563EB';
             }
 
             if ($existingPass) {
-                $builder = $existingPass->builder()
-                    ->setIconImage($iconPath = $this->teamLogoPath($card->team) ?? storage_path('app/private/passgenerator/assets/icon.png'));
+                $builder = $existingPass->builder()->setIconImage($iconPath);
 
-                if ($iconPath !== storage_path('app/private/passgenerator/assets/icon.png')) {
+                if ($logoPath) {
                     $builder->setLogoImage($iconPath);
                 }
 
@@ -334,9 +335,9 @@ class Card extends Controller
                 ->setDownloadName(Str::slug($card->team->name).'-tarjeta')
                 ->setDescription('Tarjeta de fidelidad de '.$card->team->name)
                 ->setLogoText(Str::limit($card->team->name, 20, ''))
-                ->setIconImage(storage_path('app/private/passgenerator/assets/icon.png'));
+                ->setIconImage($iconPath);
 
-            if ($logoPath = $this->teamLogoPath($card->team)) {
+            if ($logoPath) {
                 $passBuilder->setLogoImage($logoPath)->setIconImage($logoPath);
             }
 
