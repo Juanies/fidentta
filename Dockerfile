@@ -32,7 +32,7 @@ COPY . .
 RUN composer dump-autoload --no-dev --optimize --no-scripts \
     && php artisan package:discover --ansi
 
-FROM node:24-alpine AS assets
+FROM node:24-bookworm-slim AS assets
 
 WORKDIR /app
 
