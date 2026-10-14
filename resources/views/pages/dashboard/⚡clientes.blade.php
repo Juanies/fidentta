@@ -310,6 +310,6 @@ new class extends Component {
             @endforelse
         </ul>
 
-        <div class="mt-4">{{ $this->customers->links() }}</div>
+        <div class="mt-4">{{ $this->customers->links('components.pagination.numeric') }}</div>
     </section>
 </div>

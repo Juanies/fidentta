@@ -61,6 +61,10 @@ new class extends Component {
         });
 
         $this->statusMessage = $updated ? 'Recompensa marcada como entregada.' : 'Esta recompensa ya estaba entregada.';
+
+        if ($updated) {
+            $this->dispatch('rewards-updated');
+        }
     }
 
     public function getLocationsProperty()
@@ -191,6 +195,6 @@ new class extends Component {
             @endforelse
         </ul>
 
-        <div class="mt-4">{{ $this->rewards->links() }}</div>
+        <div class="mt-4">{{ $this->rewards->links('components.pagination.numeric') }}</div>
     </section>
 </div>

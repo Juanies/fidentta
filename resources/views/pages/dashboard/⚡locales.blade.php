@@ -179,7 +179,7 @@ new class extends Component {
             @endforeach
         </section>
 
-        <div class="bg-card px-5 py-4">{{ $this->locales->links() }}</div>
+        <div class="bg-card px-5 py-4">{{ $this->locales->links('components.pagination.numeric') }}</div>
     @endif
 
 </div>

@@ -1,7 +1,9 @@
 <?php
 
 use App\Actions\Teams\CreateTeam;
+use App\Livewire\PendingRewardsBadge;
 use App\Models\card as LoyaltyCard;
+use App\Models\CardReward;
 use App\Models\CustomerUser;
 use App\Models\Location;
 use App\Models\User;
@@ -155,6 +157,7 @@ test('customers page paginates customer records', function () {
     Livewire::test('pages::dashboard.clientes')
         ->assertSee('21 clientes')
         ->assertSee('cliente21@example.com')
+        ->assertSee('Ir a la página 2')
         ->call('gotoPage', 2)
         ->assertSee('cliente1@example.com')
         ->assertDontSee('cliente21@example.com');
@@ -177,6 +180,7 @@ test('locations page paginates all locations without changing team totals', func
     Livewire::test('pages::dashboard.locales')
         ->assertSee('Sucursal 13')
         ->assertDontSee('Sucursal antigua')
+        ->assertSee('Ir a la página 2')
         ->call('gotoPage', 2)
         ->assertSee('Sucursal antigua')
         ->assertSee('13');
@@ -199,6 +203,59 @@ test('locations page rejects duplicate names within the same team', function () 
         ->assertHasErrors(['name' => 'unique']);
 
     expect($team->locations()->where('name', 'Sucursal existente')->count())->toBe(1);
+});
+
+test('rewards page shows numbered pagination and pending count in the sidebar', function () {
+    $user = makeDashboardFilterUser();
+    $team = $user->currentTeam;
+    $location = Location::create([
+        'team_id' => $team->id,
+        'name' => 'Local de recompensas',
+        'is_active' => true,
+    ]);
+    $design = $team->cardDesign()->create([
+        'is_active' => true,
+        'color_scheme' => [],
+        'stamps_required' => 8,
+        'reward' => 'Café',
+    ]);
+    $customer = CustomerUser::create([
+        'team_id' => $team->id,
+        'location_id' => $location->id,
+        'email' => 'reward-pagination@example.com',
+        'guest' => false,
+    ]);
+    $card = $customer->cards()->create([
+        'team_id' => $team->id,
+        'card_design_id' => $design->id,
+        'stamps_collected' => 8,
+        'is_active' => true,
+    ]);
+
+    foreach (range(1, 21) as $cycle) {
+        CardReward::create([
+            'team_id' => $team->id,
+            'customer_id' => $customer->id,
+            'card_id' => $card->id,
+            'reward_name' => 'Café',
+            'cycle_number' => $cycle,
+            'earned_at' => now()->subMinutes($cycle),
+        ]);
+    }
+
+    $this->actingAs($user)->withoutMiddleware()
+        ->get(route('dashboard.recompensas', ['current_team' => $team->slug]))
+        ->assertOk()
+        ->assertSee('Ir a la página 2')
+        ->assertSee('aria-label="21 recompensas pendientes"', false);
+
+    $badge = Livewire::test(PendingRewardsBadge::class)->assertSee('21');
+    CardReward::query()->where('team_id', $team->id)->firstOrFail()->update(['delivered_at' => now()]);
+
+    $badge->dispatch('rewards-updated')
+        ->assertSee('20')
+        ->assertSee('aria-label="20 recompensas pendientes"', false)
+        ->assertDontSee('aria-label="21 recompensas pendientes"', false);
 });
 
 test('dashboard validation errors are shown in Spanish', function () {
