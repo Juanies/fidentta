@@ -56,8 +56,7 @@ new class extends Component {
                     <p class="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-mintd">
                         <span class="h-px w-8 bg-mintd"></span> Fidelización para negocios locales
                     </p>
-                    <h1 class="max-w-[11ch] font-display text-5xl leading-[0.98] sm:text-6xl lg:text-7xl">Cada visita
-                        puede ser el comienzo.</h1>
+                    <h1 class="max-w-[11ch] font-display text-5xl leading-[0.98] sm:text-6xl lg:text-7xl">Una visita, un nuevo comienzo</h1>
                     <p class="mt-6 max-w-xl text-lg leading-8 text-ink2 sm:text-xl">Crea una experiencia de fidelidad
                         sencilla: una tarjeta digital, un QR por local y recompensas que invitan a volver.</p>
                     <div class="mt-8 flex flex-col gap-3 sm:flex-row">
