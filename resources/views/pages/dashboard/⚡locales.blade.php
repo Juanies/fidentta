@@ -52,7 +52,7 @@ new class extends Component {
             ->orderByDesc('is_active')
             ->orderByDesc('stamps_month')
             ->orderByDesc('id')
-            ->paginate(12);
+            ->paginate(6);
     }
 
     public function getResumenProperty(): array

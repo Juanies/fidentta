@@ -96,7 +96,7 @@ new class extends Component {
             })
             ->orderByRaw('delivered_at IS NOT NULL')
             ->orderByDesc('earned_at')
-            ->paginate(20);
+            ->paginate(6);
     }
 }; ?>
 

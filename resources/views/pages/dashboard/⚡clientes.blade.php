@@ -168,7 +168,7 @@ new class extends Component {
             ->with(['registrationValues.field', 'location', 'cards' => fn($cards) => $cards->where('is_active', true), 'mobilePasses.registrations', 'mobilePasses.googleEvents'])
             ->orderByDesc('created_at')
             ->orderByDesc('id')
-            ->paginate(20)
+            ->paginate(6)
             ->through(fn(CustomerUser $customer) => $customer->setAttribute('wallet_status', $this->walletStatus($customer)));
     }
 }; ?>

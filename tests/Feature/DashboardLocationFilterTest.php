@@ -143,7 +143,7 @@ test('customers page paginates customer records', function () {
         'is_active' => true,
     ]);
 
-    foreach (range(1, 21) as $index) {
+    foreach (range(1, 7) as $index) {
         CustomerUser::create([
             'team_id' => $team->id,
             'location_id' => $location->id,
@@ -155,19 +155,21 @@ test('customers page paginates customer records', function () {
     $this->actingAs($user);
 
     Livewire::test('pages::dashboard.clientes')
-        ->assertSee('21 clientes')
-        ->assertSee('cliente21@example.com')
+        ->assertSee('7 clientes')
+        ->assertSee('cliente7@example.com')
+        ->assertDontSee('cliente1@example.com')
+        ->assertSee('href="?page=2"', false)
         ->assertSee('Ir a la página 2')
         ->call('gotoPage', 2)
         ->assertSee('cliente1@example.com')
-        ->assertDontSee('cliente21@example.com');
+        ->assertDontSee('cliente7@example.com');
 });
 
 test('locations page paginates all locations without changing team totals', function () {
     $user = makeDashboardFilterUser();
     $team = $user->currentTeam;
 
-    foreach (range(1, 13) as $index) {
+    foreach (range(1, 7) as $index) {
         Location::create([
             'team_id' => $team->id,
             'name' => $index === 1 ? 'Sucursal antigua' : "Sucursal {$index}",
@@ -178,12 +180,13 @@ test('locations page paginates all locations without changing team totals', func
     $this->actingAs($user);
 
     Livewire::test('pages::dashboard.locales')
-        ->assertSee('Sucursal 13')
+        ->assertSee('Sucursal 7')
         ->assertDontSee('Sucursal antigua')
+        ->assertSee('href="?page=2"', false)
         ->assertSee('Ir a la página 2')
         ->call('gotoPage', 2)
         ->assertSee('Sucursal antigua')
-        ->assertSee('13');
+        ->assertDontSee('Sucursal 7');
 });
 
 test('locations page rejects duplicate names within the same team', function () {
@@ -247,7 +250,13 @@ test('rewards page shows numbered pagination and pending count in the sidebar', 
         ->get(route('dashboard.recompensas', ['current_team' => $team->slug]))
         ->assertOk()
         ->assertSee('Ir a la página 2')
+        ->assertSee('href="?page=2"', false)
         ->assertSee('aria-label="21 recompensas pendientes"', false);
+
+    $this->get(route('dashboard.recompensas', ['current_team' => $team->slug, 'page' => 2]))
+        ->assertOk()
+        ->assertSee('Ciclo 7')
+        ->assertDontSee('>Ciclo 1</span>', false);
 
     $badge = Livewire::test(PendingRewardsBadge::class)->assertSee('21');
     CardReward::query()->where('team_id', $team->id)->firstOrFail()->update(['delivered_at' => now()]);
