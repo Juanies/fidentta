@@ -7,6 +7,7 @@ use App\Models\Location;
 use App\Models\User;
 use App\Services\AddStampsToCard;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 use Spatie\LaravelMobilePass\Builders\Apple\StoreCardPassBuilder;
@@ -53,7 +54,7 @@ test('adding a stamp after completing the card starts the next cycle at one', fu
 
     $unauthorizedUser = User::factory()->create();
 
-    expect(fn() => $addStamps->add($card, $unauthorizedUser, $location, requestKey: 'same-click-request'))
+    expect(fn () => $addStamps->add($card, $unauthorizedUser, $location, requestKey: 'same-click-request'))
         ->toThrow(AuthorizationException::class);
 
     foreach (range(2, 8) as $_) {
@@ -113,7 +114,7 @@ test('wallet progress updates the stored pass and queues a remote update', funct
         'is_active' => true,
     ]);
     $pass = $customer->mobilePasses()->create([
-        'pass_serial' => 'wallet-sync-' . $card->id,
+        'pass_serial' => 'wallet-sync-'.$card->id,
         'type' => PassType::StoreCard->value,
         'platform' => Platform::Google->value,
         'builder_name' => 'loyalty_pass',
@@ -181,7 +182,7 @@ test('apple wallet registration is counted and stamp changes queue an updated pa
 
     $pass = StoreCardPassBuilder::make()
         ->setOrganizationName($team->name)
-        ->setSerialNumber('apple-card-' . $card->id)
+        ->setSerialNumber('apple-card-'.$card->id)
         ->setDescription('Loyalty card')
         ->setLogoText($team->name)
         ->addField('stamps', '0/8', FieldType::Primary, label: 'Sellos')
@@ -194,9 +195,9 @@ test('apple wallet registration is counted and stamp changes queue an updated pa
     $this->postJson(route('mobile-pass.register-device', [
         'deviceId' => 'apple-device-test',
         'passTypeId' => 'pass.com.fidentta.test',
-        'passSerial' => 'apple-card-' . $card->id,
+        'passSerial' => 'apple-card-'.$card->id,
     ]), ['pushToken' => 'apple-push-token-test'], [
-        'Authorization' => 'ApplePass ' . $secret,
+        'Authorization' => 'ApplePass '.$secret,
     ])->assertCreated();
 
     expect($pass->fresh()->isCurrentlyInWallet())->toBeTrue()
@@ -250,4 +251,15 @@ test('apple wallet pass is not issued without a usable public web service', func
     $this->assertDatabaseMissing('mobile_passes', [
         'platform' => Platform::Apple->value,
     ]);
+});
+
+test('only Apple Wallet write endpoints bypass CSRF verification', function () {
+    $excludedPaths = app(PreventRequestForgery::class)->getExcludedPaths();
+
+    expect($excludedPaths)
+        ->toContain('passkit/v1/devices/*/registrations/*/*')
+        ->not->toContain('passkit/*')
+        ->not->toContain('passkit/v1/passes/*/*/personalize')
+        ->not->toContain('passkit/v1/log')
+        ->not->toContain('passkit/v1/google/callbacks');
 });

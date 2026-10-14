@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '*');
+        $middleware->preventRequestForgery(except: [
+            'passkit/v1/devices/*/registrations/*/*',
+        ]);
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
