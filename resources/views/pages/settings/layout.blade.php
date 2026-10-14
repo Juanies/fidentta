@@ -4,6 +4,9 @@
             <flux:navlist.item :href="route('profile.edit')" :current="request()->routeIs('profile.edit')"
                 class="text-ink2 hover:bg-mint/15 hover:text-ink data-current:bg-mint/20 data-current:text-ink"
                 wire:navigate>{{ __('Perfil') }}</flux:navlist.item>
+            <flux:navlist.item :href="route('billing.edit')" :current="request()->routeIs('billing.edit')"
+                class="text-ink2 hover:bg-mint/15 hover:text-ink data-current:bg-mint/20 data-current:text-ink"
+                wire:navigate>{{ __('Pagos') }}</flux:navlist.item>
             <flux:navlist.item :href="route('security.edit')" :current="request()->routeIs('security.edit')"
                 class="text-ink2 hover:bg-mint/15 hover:text-ink data-current:bg-mint/20 data-current:text-ink"
                 wire:navigate>{{ __('Seguridad') }}</flux:navlist.item>
