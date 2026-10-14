@@ -54,7 +54,7 @@ test('adding a stamp after completing the card starts the next cycle at one', fu
 
     $unauthorizedUser = User::factory()->create();
 
-    expect(fn () => $addStamps->add($card, $unauthorizedUser, $location, requestKey: 'same-click-request'))
+    expect(fn() => $addStamps->add($card, $unauthorizedUser, $location, requestKey: 'same-click-request'))
         ->toThrow(AuthorizationException::class);
 
     foreach (range(2, 8) as $_) {
@@ -114,7 +114,7 @@ test('wallet progress updates the stored pass and queues a remote update', funct
         'is_active' => true,
     ]);
     $pass = $customer->mobilePasses()->create([
-        'pass_serial' => 'wallet-sync-'.$card->id,
+        'pass_serial' => 'wallet-sync-' . $card->id,
         'type' => PassType::StoreCard->value,
         'platform' => Platform::Google->value,
         'builder_name' => 'loyalty_pass',
@@ -182,7 +182,7 @@ test('apple wallet registration is counted and stamp changes queue an updated pa
 
     $pass = StoreCardPassBuilder::make()
         ->setOrganizationName($team->name)
-        ->setSerialNumber('apple-card-'.$card->id)
+        ->setSerialNumber('apple-card-' . $card->id)
         ->setDescription('Loyalty card')
         ->setLogoText($team->name)
         ->addField('stamps', '0/8', FieldType::Primary, label: 'Sellos')
@@ -195,9 +195,9 @@ test('apple wallet registration is counted and stamp changes queue an updated pa
     $this->postJson(route('mobile-pass.register-device', [
         'deviceId' => 'apple-device-test',
         'passTypeId' => 'pass.com.fidentta.test',
-        'passSerial' => 'apple-card-'.$card->id,
+        'passSerial' => 'apple-card-' . $card->id,
     ]), ['pushToken' => 'apple-push-token-test'], [
-        'Authorization' => 'ApplePass '.$secret,
+        'Authorization' => 'ApplePass ' . $secret,
     ])->assertCreated();
 
     expect($pass->fresh()->isCurrentlyInWallet())->toBeTrue()
