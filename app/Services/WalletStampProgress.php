@@ -47,6 +47,7 @@ class WalletStampProgress
                 Log::error('Apple Wallet stamp progress update failed.', [
                     'card_id' => $card->id,
                     'exception' => $exception::class,
+                    'message' => $exception->getMessage(),
                 ]);
             }
         }

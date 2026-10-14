@@ -11,6 +11,14 @@
             <p class="text-xs font-medium uppercase text-muted-foreground">Sellos actuales</p>
             <p class="mt-1 text-2xl font-semibold text-ink">{{ $card->stamps_collected }}</p>
         </div>
+        @if (!$appleWalletWebServiceReady)
+            <p role="alert"
+                class="mt-5 rounded-lg border border-amber-300 bg-amber-50 p-3 text-left text-sm leading-5 text-amber-900">
+                Apple Wallet no se preparó: necesita un web service público con HTTPS y un token de autenticación de
+                al menos 16 caracteres. Después de configurarlo, elimina el pase anterior y vuelve a añadirlo para
+                activar el registro y las actualizaciones de sellos.
+            </p>
+        @endif
         @forelse ($walletUrls as $platform => $walletUrl)
             <a href="{{ $walletUrl }}"
                 class="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-700">
@@ -24,13 +32,8 @@
         @empty
             <p
                 class="mt-5 rounded-lg border border-amber-300 bg-amber-50 p-3 text-left text-sm leading-5 text-amber-900">
-                @if ($appleWalletNeedsPublicHttps)
-                    El registro está guardado. Apple Wallet necesita que la app use una URL pública con HTTPS y que
-                    abras este enlace desde Safari en un iPhone. `localhost` no es accesible desde el teléfono.
-                @else
-                    Tu registro está guardado, pero no se pudo preparar el pase. El equipo del local puede revisar la
-                    configuración de sus wallets.
-                @endif
+                Tu registro está guardado, pero no se pudo preparar ningún pase. El equipo del local puede revisar la
+                configuración de sus wallets.
             </p>
         @endforelse
     </div>
