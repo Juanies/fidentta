@@ -18,6 +18,7 @@ test('billing settings show the current subscription and previous invoices secti
     $this->actingAs($user)
         ->get(route('billing.edit'))
         ->assertOk()
+        ->assertSee('Plataforma')
         ->assertSee('Suscripción actual')
         ->assertSee('Activa')
         ->assertSee('Cancelar suscripción')
