@@ -5,6 +5,7 @@ use App\Models\CardTransaction;
 use App\Models\CustomerUser;
 use App\Models\Location;
 use Illuminate\Support\Facades\DB;
+use Spatie\LaravelMobilePass\Models\MobilePass;
 
 new class extends Component {
     public $team;
@@ -47,19 +48,23 @@ new class extends Component {
         return $query;
     }
 
-    private function customersWithWalletAddsQuery($start, $end)
+    private function walletPassesAddedQuery($start, $end)
     {
-        return $this->customersQuery()->whereHas('mobilePasses', function ($passes) use ($start, $end) {
-            $passes->where(function ($platforms) use ($start, $end) {
-                $platforms
-                    ->where(function ($apple) use ($start, $end) {
-                        $apple->where('platform', 'apple')->whereHas('registrations', fn($registrations) => $registrations->whereBetween('created_at', [$start, $end]));
-                    })
-                    ->orWhere(function ($google) use ($start, $end) {
-                        $google->where('platform', 'google')->whereHas('googleEvents', fn($events) => $events->where('event_type', 'save')->whereBetween('received_at', [$start, $end]));
-                    });
+        return MobilePass::query()
+            ->whereHasMorph('model', [CustomerUser::class], function ($customers) {
+                $customers->whereIn('id', $this->customersQuery()->select('id'));
+            })
+            ->where(function ($passes) use ($start, $end) {
+                $passes->where(function ($platforms) use ($start, $end) {
+                    $platforms
+                        ->where(function ($apple) use ($start, $end) {
+                            $apple->where('platform', 'apple')->whereHas('registrations', fn($registrations) => $registrations->whereBetween('created_at', [$start, $end]));
+                        })
+                        ->orWhere(function ($google) use ($start, $end) {
+                            $google->where('platform', 'google')->whereHas('googleEvents', fn($events) => $events->where('event_type', 'save')->whereBetween('received_at', [$start, $end]));
+                        });
+                });
             });
-        });
     }
 
     private function comparison(int|float $current, int|float $previous): array
@@ -80,10 +85,10 @@ new class extends Component {
 
     public function getStatsProperty(): array
     {
-        $currentStart = now()->startOfDay()->subDays(6);
-        $currentEnd = now()->endOfDay();
-        $previousStart = $currentStart->subDays(7);
-        $previousEnd = $currentStart->subSecond();
+        $currentStart = now()->copy()->startOfDay()->subDays(6);
+        $currentEnd = now()->copy()->endOfDay();
+        $previousStart = $currentStart->copy()->subDays(7);
+        $previousEnd = $currentStart->copy()->subSecond();
 
         $currentCustomers = $this->customersQuery()
             ->whereBetween('created_at', [$currentStart, $currentEnd])
@@ -99,8 +104,8 @@ new class extends Component {
             ->whereBetween('created_at', [$previousStart, $previousEnd])
             ->sum('stamps_added');
 
-        $currentWalletAdds = $this->customersWithWalletAddsQuery($currentStart, $currentEnd)->count();
-        $previousWalletAdds = $this->customersWithWalletAddsQuery($previousStart, $previousEnd)->count();
+        $currentWalletAdds = $this->walletPassesAddedQuery($currentStart, $currentEnd)->count();
+        $previousWalletAdds = $this->walletPassesAddedQuery($previousStart, $previousEnd)->count();
 
         $currentVisits = $this->transactionsQuery()
             ->whereBetween('created_at', [$currentStart, $currentEnd])

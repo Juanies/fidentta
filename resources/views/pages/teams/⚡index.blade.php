@@ -166,8 +166,10 @@ new #[Title('Equipos')] class extends Component {
                     <flux:button variant="filled">{{ __('Cancelar') }}</flux:button>
                 </flux:modal.close>
 
-                <flux:button variant="primary" type="submit" data-test="create-team-submit">
-                    {{ __('Crear equipo') }}
+                <flux:button variant="primary" type="submit" wire:loading.attr="disabled" wire:target="createTeam"
+                    data-test="create-team-submit">
+                    <span wire:loading.remove wire:target="createTeam">{{ __('Crear equipo') }}</span>
+                    <span wire:loading wire:target="createTeam">{{ __('Creando equipo...') }}</span>
                 </flux:button>
             </div>
         </form>

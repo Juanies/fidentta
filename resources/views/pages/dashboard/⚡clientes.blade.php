@@ -6,20 +6,28 @@ use App\Models\Location;
 use App\Services\AddStampsToCard;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Str;
+use Livewire\Attributes\Locked;
+use Livewire\WithPagination;
 
 new class extends Component {
+    use WithPagination;
+
     public $team;
     public string $locationId = '';
     public string $search = '';
     public string $stampFilter = 'all';
     public ?string $statusMessage = null;
     public int $rewardGoal = 8;
+    #[Locked]
+    public string $stampRequestKey;
 
     public function mount()
     {
         $this->team = auth()->user()->currentTeam;
         abort_unless($this->team !== null, 404);
         $this->rewardGoal = max(1, (int) ($this->team->cardDesign?->stamps_required ?? 8));
+        $this->stampRequestKey = (string) Str::uuid();
     }
 
     public function updatedLocationId(): void
@@ -27,6 +35,8 @@ new class extends Component {
         if ($this->locationId !== '' && !$this->team->locations()->whereKey($this->locationId)->exists()) {
             $this->locationId = '';
         }
+
+        $this->resetPage();
     }
 
     public function updatedStampFilter(): void
@@ -34,6 +44,13 @@ new class extends Component {
         if (!in_array($this->stampFilter, ['all', 'completed'], true)) {
             $this->stampFilter = 'all';
         }
+
+        $this->resetPage();
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
     }
 
     public function addStamp(int $customerId, AddStampsToCard $addStamps): void
@@ -47,10 +64,12 @@ new class extends Component {
         $card = $customer->cards()->where('is_active', true)->latest()->firstOrFail();
 
         try {
-            $addStamps->add($card, auth()->user(), $location);
+            $addStamps->add($card, auth()->user(), $location, requestKey: $this->stampRequestKey);
+            $this->stampRequestKey = (string) Str::uuid();
             $customerLabel = $customer->email ?: 'cliente ' . $customer->id;
             $this->statusMessage = 'Sello añadido a la tarjeta de ' . $customerLabel . ' en ' . $location->name . '.';
         } catch (ValidationException $exception) {
+            $this->stampRequestKey = (string) Str::uuid();
             $this->addError('stamp', $exception->validator->errors()->first('amount') ?: $exception->getMessage());
         }
     }
@@ -147,10 +166,10 @@ new class extends Component {
             ->withCount(['cards', 'cards as active_cards_count' => fn($cards) => $cards->where('is_active', true)])
             ->withSum('cards as stamps_total', 'stamps_collected')
             ->with(['registrationValues.field', 'location', 'cards' => fn($cards) => $cards->where('is_active', true), 'mobilePasses.registrations', 'mobilePasses.googleEvents'])
-            ->latest()
-            ->limit(50)
-            ->get()
-            ->each(fn(CustomerUser $customer) => $customer->setAttribute('wallet_status', $this->walletStatus($customer)));
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate(20)
+            ->through(fn(CustomerUser $customer) => $customer->setAttribute('wallet_status', $this->walletStatus($customer)));
     }
 }; ?>
 <div class="flex h-full w-full flex-1 flex-col gap-px p-4 md:p-6" style="background: var(--border);">
@@ -223,7 +242,9 @@ new class extends Component {
         @enderror
         <div class="flex items-baseline justify-between gap-4">
             <h2 class="text-2xl tracking-tight text-ink">Clientes recientes</h2>
-            <span class="text-xs font-semibold uppercase tracking-[0.16em] text-ink2">50 más recientes</span>
+            <span class="text-xs font-semibold uppercase tracking-[0.16em] text-ink2">
+                {{ $this->customers->total() }} clientes
+            </span>
         </div>
 
         <ul class="mt-4 divide-y divide-border">
@@ -288,5 +309,7 @@ new class extends Component {
                 </li>
             @endforelse
         </ul>
+
+        <div class="mt-4">{{ $this->customers->links() }}</div>
     </section>
 </div>

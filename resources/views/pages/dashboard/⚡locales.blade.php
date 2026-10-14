@@ -1,9 +1,14 @@
 <?php
 
 use App\Models\Location;
+use App\Models\CardTransaction;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 new class extends Component {
+    use WithPagination;
+
     public $team;
     public bool $showCreateForm = false;
     public string $name = '';
@@ -16,10 +21,15 @@ new class extends Component {
 
     public function crearLocal(): void
     {
-        $validated = $this->validate([
-            'name' => ['required', 'string', 'min:2', 'max:120'],
-            'address' => ['nullable', 'string', 'max:255'],
-        ]);
+        $validated = $this->validate(
+            [
+                'name' => ['required', 'string', 'min:2', 'max:120', Rule::unique('locations', 'name')->where('team_id', $this->team->id)],
+                'address' => ['nullable', 'string', 'max:255'],
+            ],
+            [
+                'name.unique' => 'Ya existe un local con ese nombre en este negocio.',
+            ],
+        );
 
         $location = $this->team->locations()->create([...$validated, 'is_active' => true]);
 
@@ -41,17 +51,19 @@ new class extends Component {
             ->withSum(['cardTransactions as stamps_month' => fn($transactions) => $transactions->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])], 'stamps_added')
             ->orderByDesc('is_active')
             ->orderByDesc('stamps_month')
-            ->get();
+            ->orderByDesc('id')
+            ->paginate(12);
     }
 
     public function getResumenProperty(): array
     {
-        $locales = $this->locales;
-
         return [
-            'activos' => $locales->where('is_active', true)->count(),
-            'clientes' => (int) $locales->sum('customer_users_count'),
-            'sellos' => (int) $locales->sum(fn($local) => (int) ($local->stamps_month ?? 0)),
+            'activos' => $this->team->locations()->where('is_active', true)->count(),
+            'clientes' => $this->team->customerusers()->count(),
+            'sellos' => (int) CardTransaction::query()
+                ->whereHas('location', fn($locations) => $locations->where('team_id', $this->team->id))
+                ->whereBetween('created_at', [now()->startOfMonth(), now()->endOfMonth()])
+                ->sum('stamps_added'),
         ];
     }
 }; ?>
@@ -63,7 +75,7 @@ new class extends Component {
             <h1 class="mt-1 text-4xl tracking-tight text-ink">Locales de {{ $team->name }}</h1>
             <p class="mt-2 max-w-xl text-sm leading-6 text-ink2">Puntos de atención y su QR de fidelidad.</p>
         </div>
-        <button type="button" wire:click="$toggle('showCreateForm')"
+        <button type="button" wire:click="$toggle('showCreateForm')" wire:loading.attr="disabled"
             class="inline-flex w-fit items-center gap-2 bg-ink px-5 py-3 text-sm font-bold text-paper transition hover:opacity-90">
             <span aria-hidden="true">+</span> Añadir local
         </button>
@@ -93,9 +105,11 @@ new class extends Component {
             <div class="flex justify-end gap-3 sm:col-span-2">
                 <button type="button" wire:click="$set('showCreateForm', false)"
                     class="px-4 py-2.5 text-sm font-semibold text-ink2 transition hover:text-ink">Cancelar</button>
-                <button type="submit"
+                <button type="submit" wire:loading.attr="disabled" wire:target="crearLocal"
                     class="bg-ink px-5 py-2.5 text-sm font-bold text-paper transition hover:opacity-90">Crear
-                    local</button>
+                    <span wire:loading.remove wire:target="crearLocal">local</span>
+                    <span wire:loading wire:target="crearLocal">local...</span>
+                </button>
             </div>
         </form>
     @endif
@@ -124,7 +138,7 @@ new class extends Component {
         <section class="bg-card px-6 py-14 text-center">
             <h2 class="text-xl tracking-tight text-ink">Aún no hay locales</h2>
             <p class="mt-2 text-sm text-ink2">Crea una sucursal para generar su QR y empezar a registrar visitas.</p>
-            <button type="button" wire:click="$set('showCreateForm', true)"
+            <button type="button" wire:click="$set('showCreateForm', true)" wire:loading.attr="disabled"
                 class="mt-5 inline-flex items-center gap-2 bg-ink px-5 py-3 text-sm font-bold text-paper transition hover:opacity-90">Crear
                 el primero <span aria-hidden="true">&rarr;</span></button>
         </section>
@@ -164,6 +178,8 @@ new class extends Component {
                 </a>
             @endforeach
         </section>
+
+        <div class="bg-card px-5 py-4">{{ $this->locales->links() }}</div>
     @endif
 
 </div>

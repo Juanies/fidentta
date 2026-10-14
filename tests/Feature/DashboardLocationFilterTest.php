@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Spatie\LaravelMobilePass\Enums\PassType;
 use Spatie\LaravelMobilePass\Enums\Platform;
+use Spatie\LaravelMobilePass\Models\Apple\AppleMobilePassDevice;
 
 function makeDashboardFilterUser(): User
 {
@@ -129,6 +130,87 @@ test('customers page filters the list with the search input', function () {
         ->set('search', 'maria.busqueda')
         ->assertSee('maria.busqueda@example.com')
         ->assertDontSee('otro.cliente@example.com');
+});
+
+test('customers page paginates customer records', function () {
+    $user = makeDashboardFilterUser();
+    $team = $user->currentTeam;
+    $location = Location::create([
+        'team_id' => $team->id,
+        'name' => 'Local con páginas',
+        'is_active' => true,
+    ]);
+
+    foreach (range(1, 21) as $index) {
+        CustomerUser::create([
+            'team_id' => $team->id,
+            'location_id' => $location->id,
+            'email' => "cliente{$index}@example.com",
+            'guest' => false,
+        ]);
+    }
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::dashboard.clientes')
+        ->assertSee('21 clientes')
+        ->assertSee('cliente21@example.com')
+        ->call('gotoPage', 2)
+        ->assertSee('cliente1@example.com')
+        ->assertDontSee('cliente21@example.com');
+});
+
+test('locations page paginates all locations without changing team totals', function () {
+    $user = makeDashboardFilterUser();
+    $team = $user->currentTeam;
+
+    foreach (range(1, 13) as $index) {
+        Location::create([
+            'team_id' => $team->id,
+            'name' => $index === 1 ? 'Sucursal antigua' : "Sucursal {$index}",
+            'is_active' => true,
+        ]);
+    }
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::dashboard.locales')
+        ->assertSee('Sucursal 13')
+        ->assertDontSee('Sucursal antigua')
+        ->call('gotoPage', 2)
+        ->assertSee('Sucursal antigua')
+        ->assertSee('13');
+});
+
+test('locations page rejects duplicate names within the same team', function () {
+    $user = makeDashboardFilterUser();
+    $team = $user->currentTeam;
+    Location::create([
+        'team_id' => $team->id,
+        'name' => 'Sucursal existente',
+        'is_active' => true,
+    ]);
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::dashboard.locales')
+        ->set('name', 'Sucursal existente')
+        ->call('crearLocal')
+        ->assertHasErrors(['name' => 'unique']);
+
+    expect($team->locations()->where('name', 'Sucursal existente')->count())->toBe(1);
+});
+
+test('dashboard validation errors are shown in Spanish', function () {
+    $user = makeDashboardFilterUser();
+
+    $this->actingAs($user);
+
+    Livewire::test('pages::dashboard.locales')
+        ->set('showCreateForm', true)
+        ->call('crearLocal')
+        ->assertHasErrors(['name' => 'required'])
+        ->assertSeeText('El campo nombre es obligatorio.');
 });
 
 test('customers page can filter cards that have completed their stamp goal', function () {
@@ -350,11 +432,11 @@ test('dashboard compares all four metric totals across consecutive seven-day per
 
     foreach ([[$cards[0], now()->subDay(), 'current'], [$cards[2], now()->subDays(8), 'previous']] as [$card, $savedAt, $suffix]) {
         $pass = $card->customer->mobilePasses()->create([
-            'pass_serial' => 'wallet-'.$suffix.'-'.$card->id,
+            'pass_serial' => 'wallet-' . $suffix . '-' . $card->id,
             'type' => PassType::StoreCard->value,
             'platform' => Platform::Google->value,
             'builder_name' => 'loyalty_pass',
-            'content' => ['googleClassType' => 'loyaltyClass', 'googleObjectId' => 'issuer.'.$suffix],
+            'content' => ['googleClassType' => 'loyaltyClass', 'googleObjectId' => 'issuer.' . $suffix],
             'images' => [],
         ]);
         $pass->googleEvents()->create([
@@ -363,15 +445,35 @@ test('dashboard compares all four metric totals across consecutive seven-day per
         ]);
     }
 
+    $applePass = $cards[0]->customer->mobilePasses()->create([
+        'pass_serial' => 'apple-current-' . $cards[0]->id,
+        'type' => PassType::StoreCard->value,
+        'platform' => Platform::Apple->value,
+        'builder_name' => 'store_card_pass',
+        'content' => ['passTypeIdentifier' => 'pass.test.current'],
+        'images' => [],
+    ]);
+    $device = AppleMobilePassDevice::create([
+        'id' => 'device-current',
+        'push_token' => 'test-push-token',
+    ]);
+    $applePass->registrations()->create([
+        'device_id' => $device->id,
+        'pass_type_id' => 'pass.test.current',
+    ]);
+
     $this->actingAs($user);
 
-    Livewire::test('pages::dashboard.inicio')
+    $dashboard = Livewire::test('pages::dashboard.inicio')
         ->set('locationId', (string) $location->id)
         ->assertSee('Clientes nuevos')
         ->assertSee('+100.0%')
         ->assertSee('Sellos entregados')
         ->assertSee('+50.0%')
         ->assertSee('Pases en Wallet')
-        ->assertSee('0.0%')
+        ->assertSeeText('67%')
         ->assertSee('Visitas');
+
+    expect($dashboard->instance()->stats['wallet_adds']['value'])->toBe(2)
+        ->and($dashboard->instance()->insights['wallet_installed'])->toBe(2);
 });

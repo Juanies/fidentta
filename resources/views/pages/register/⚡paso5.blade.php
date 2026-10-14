@@ -137,9 +137,11 @@ new class extends Component {
                     </div>
                 </div>
 
-                <button type="submit" wire:loading.attr="disabled"
-                    class="mt-7 w-full rounded-xl bg-fidentta-cyan px-5 py-3.5 text-sm font-bold text-fidentta-navy shadow-lg shadow-fidentta-cyan/15">Crear
-                    mi tarjeta</button>
+                <button type="submit" wire:loading.attr="disabled" wire:target="registrarse"
+                    class="mt-7 w-full rounded-xl bg-fidentta-cyan px-5 py-3.5 text-sm font-bold text-fidentta-navy shadow-lg shadow-fidentta-cyan/15">
+                    <span wire:loading.remove wire:target="registrarse">Crear mi tarjeta</span>
+                    <span wire:loading wire:target="registrarse">Creando cuenta...</span>
+                </button>
 
                 <div class="my-5 flex items-center gap-3 text-xs text-text-secondary/50">
                     <span class="h-px flex-1 bg-white/10"></span>

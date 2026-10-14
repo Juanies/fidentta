@@ -18,6 +18,7 @@ class AddStampsToCard
         User $user,
         Location $location,
         int $amount = 1,
+        ?string $requestKey = null,
     ): CardTransaction {
         if ($amount < 1) {
             throw ValidationException::withMessages([
@@ -25,7 +26,7 @@ class AddStampsToCard
             ]);
         }
 
-        return DB::transaction(function () use ($card, $user, $location, $amount) {
+        return DB::transaction(function () use ($card, $user, $location, $amount, $requestKey) {
             $lockedCard = LoyaltyCard::query()
                 ->with(['team', 'cardDesign', 'customer'])
                 ->lockForUpdate()
@@ -41,6 +42,16 @@ class AddStampsToCard
 
             if (! $lockedCard->customer || $lockedCard->customer->team_id !== $lockedCard->team_id) {
                 throw new ModelNotFoundException('No se encontró el cliente asociado a esta tarjeta.');
+            }
+
+            if ($requestKey !== null) {
+                $previousTransaction = $lockedCard->cardTransactions()
+                    ->where('request_key', $requestKey)
+                    ->first();
+
+                if ($previousTransaction) {
+                    return $previousTransaction;
+                }
             }
 
             $required = (int) $lockedCard->cardDesign?->stamps_required;
@@ -88,6 +99,7 @@ class AddStampsToCard
                 'location_id' => $location->id,
                 'user_id' => $user->id,
                 'stamps_added' => $amount,
+                'request_key' => $requestKey,
             ]);
         });
     }

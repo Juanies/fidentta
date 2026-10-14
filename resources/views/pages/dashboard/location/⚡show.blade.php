@@ -107,7 +107,7 @@ new class extends Component {
                             <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
                         @enderror
                     </div>
-                    <button type="submit"
+                    <button type="submit" wire:loading.attr="disabled" wire:target="guardar"
                         class="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">Guardar</button>
                     <button type="button" wire:click="$set('editing', false)"
                         class="rounded-lg border border-border px-4 py-2 text-sm font-medium text-ink">Cancelar</button>
@@ -129,7 +129,7 @@ new class extends Component {
                 <button type="button" wire:click="$set('editing', true)"
                     class="rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-semibold text-ink hover:border-brand/40">Editar
                     local</button>
-                <button type="button" wire:click="alternarEstado"
+                <button type="button" wire:click="alternarEstado" wire:loading.attr="disabled" wire:target="alternarEstado"
                     class="rounded-lg border border-border px-4 py-2.5 text-sm font-semibold {{ $location->is_active ? 'text-red-700 hover:bg-red-50' : 'text-green-800 hover:bg-green-50' }}">
                     {{ $location->is_active ? 'Desactivar' : 'Activar' }}
                 </button>
@@ -149,7 +149,7 @@ new class extends Component {
                 @enderror
             </div>
             <div class="flex items-end">
-                <button type="submit"
+                <button type="submit" wire:loading.attr="disabled" wire:target="guardar"
                     class="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 sm:w-auto">Guardar
                     dirección</button>
             </div>
@@ -217,6 +217,7 @@ new class extends Component {
                             @enderror
                         </div>
                         <button type="button" wire:click="removePageLink({{ $index }})"
+                            wire:loading.attr="disabled" wire:target="removePageLink"
                             aria-label="Eliminar enlace {{ $index + 1 }}"
                             class="px-2 text-sm font-semibold text-destructive hover:underline">Eliminar</button>
                     </div>
@@ -226,10 +227,11 @@ new class extends Component {
                 <p class="text-xs text-destructive">{{ $message }}</p>
             @enderror
             <div class="flex flex-wrap justify-between gap-3">
-                <button type="button" wire:click="addPageLink"
+                <button type="button" wire:click="addPageLink" wire:loading.attr="disabled"
+                    wire:target="addPageLink"
                     class="border border-border px-3 py-2 text-sm font-semibold text-ink hover:border-ink">+ Añadir
                     enlace</button>
-                <button type="submit"
+                <button type="submit" wire:loading.attr="disabled" wire:target="guardarPageLink"
                     class="bg-ink px-5 py-2.5 text-sm font-bold text-paper hover:opacity-90">Guardar página</button>
             </div>
         </form>
