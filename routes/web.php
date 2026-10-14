@@ -42,6 +42,7 @@ Route::prefix('{current_team}')
 
         Route::livewire('dashboard', 'pages::dashboard.inicio')->name('dashboard');
         Route::livewire('dashboard/clientes', 'pages::dashboard.clientes')->name('dashboard.clientes');
+        Route::livewire('dashboard/recompensas', 'pages::dashboard.recompensas')->name('dashboard.recompensas');
         Route::livewire('dashboard/fidelizacion', 'pages::dashboard.fidelizacion')->name('dashboard.fidelizacion');
         Route::livewire('dashboard/tarjeta', 'pages::dashboard.tarjeta')->name('dashboard.tarjeta');
         Route::livewire('dashboard/configuracion', 'pages::dashboard.configuracion')->name('dashboard.configuracion');

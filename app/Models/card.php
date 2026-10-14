@@ -46,6 +46,12 @@ class card extends Model
         return $this->hasMany(CardTransaction::class);
     }
 
+    /** @return HasMany<CardReward, $this> */
+    public function rewards(): HasMany
+    {
+        return $this->hasMany(CardReward::class);
+    }
+
     /** @return BelongsTo<CustomerUser, $this> */
     public function customer(): BelongsTo
     {

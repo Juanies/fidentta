@@ -50,17 +50,38 @@ class AddStampsToCard
             }
 
             $current = (int) $lockedCard->stamps_collected;
-            $remaining = max(0, $required - $current);
+            $lastCycle = (int) ($lockedCard->rewards()->max('cycle_number') ?? 0);
+            $cycleNumber = $lastCycle + 1;
 
-            if ($amount > $remaining) {
-                throw ValidationException::withMessages([
-                    'amount' => $remaining === 0
-                        ? 'Esta tarjeta ya completó los sellos requeridos.'
-                        : "Solo quedan {$remaining} sellos para completar esta tarjeta.",
-                ]);
+            if ($current >= $required) {
+                if (! $lockedCard->rewards()->where('cycle_number', $lastCycle)->exists()) {
+                    $this->recordReward($lockedCard, $user, $cycleNumber);
+                    $lastCycle = $cycleNumber;
+                }
+
+                $current = 0;
+                $cycleNumber = $lastCycle + 1;
             }
 
-            $lockedCard->update(['stamps_collected' => $current + $amount]);
+            $stampsRemaining = $amount;
+
+            while ($stampsRemaining > 0) {
+                $stampsToComplete = $required - $current;
+                $stampsAdded = min($stampsToComplete, $stampsRemaining);
+                $current += $stampsAdded;
+                $stampsRemaining -= $stampsAdded;
+
+                if ($current === $required) {
+                    $this->recordReward($lockedCard, $user, $cycleNumber);
+
+                    if ($stampsRemaining > 0) {
+                        $current = 0;
+                        $cycleNumber++;
+                    }
+                }
+            }
+
+            $lockedCard->update(['stamps_collected' => $current]);
 
             return $lockedCard->cardTransactions()->create([
                 'customer_id' => $lockedCard->customer_id,
@@ -69,5 +90,17 @@ class AddStampsToCard
                 'stamps_added' => $amount,
             ]);
         });
+    }
+
+    private function recordReward(LoyaltyCard $card, User $user, int $cycleNumber): void
+    {
+        $card->rewards()->create([
+            'team_id' => $card->team_id,
+            'customer_id' => $card->customer_id,
+            'reward_name' => $card->cardDesign->reward ?: 'Recompensa',
+            'cycle_number' => $cycleNumber,
+            'earned_at' => now(),
+            'earned_by' => $user->id,
+        ]);
     }
 }

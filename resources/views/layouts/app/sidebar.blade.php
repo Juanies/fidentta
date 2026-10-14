@@ -30,6 +30,13 @@
                     wire:navigate>
                     {{ __('Clientes') }}
                 </flux:sidebar.item>
+                <flux:sidebar.item icon="trophy"
+                    :href="route('dashboard.recompensas', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
+                    :current="request()->routeIs('dashboard.recompensas')"
+                    class="text-white/80! hover:bg-fidentta-cyan/15! hover:text-white! data-current:bg-fidentta-cyan/25! data-current:text-fidentta-cyan!"
+                    wire:navigate>
+                    {{ __('Recompensas') }}
+                </flux:sidebar.item>
                 <flux:sidebar.item icon="gift"
                     :href="route('dashboard.fidelizacion', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
                     :current="request()->routeIs('dashboard.fidelizacion')"

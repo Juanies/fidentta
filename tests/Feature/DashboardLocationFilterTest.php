@@ -203,8 +203,17 @@ test('reducing the stamp goal never displays an overfull count or negative remai
         ->assertDontSee('8/6')
         ->set('locationId', (string) $location->id)
         ->call('addStamp', $customer->id)
-        ->assertSee('Esta tarjeta ya completó los sellos requeridos.')
+        ->assertSee('Sello añadido a la tarjeta')
+        ->assertSee('1/6')
         ->assertDontSee('-2 sellos');
+
+    $this->assertDatabaseHas('card_rewards', [
+        'team_id' => $team->id,
+        'customer_id' => $customer->id,
+        'reward_name' => 'Café',
+        'cycle_number' => 1,
+        'delivered_at' => null,
+    ]);
 });
 
 test('public page link renders its configured title and links', function () {
