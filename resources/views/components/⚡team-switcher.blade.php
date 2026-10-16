@@ -66,7 +66,7 @@ new class extends Component {
 <div>
     <flux:dropdown position="bottom" align="start">
         <flux:button variant="ghost"
-            class="group w-full justify-start text-ink hover:bg-brand-soft hover:text-brand in-data-flux-sidebar-collapsed-desktop:justify-center"
+            class="group w-full justify-start text-white/90! hover:bg-fidentta-cyan/15! hover:text-white! in-data-flux-sidebar-collapsed-desktop:justify-center"
             data-test="team-switcher-trigger">
             <flux:icon name="users" class="hidden size-4 in-data-flux-sidebar-collapsed-desktop:block" />
             <span
