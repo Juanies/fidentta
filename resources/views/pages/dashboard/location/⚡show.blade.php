@@ -274,7 +274,7 @@ new class extends Component {
                     enlace</a>
             </div>
             <div class="mt-5 flex flex-col items-center gap-4 bg-background p-5 sm:flex-row sm:items-center">
-                <div class="shrink-0 bg-white p-3">
+                <div id="qr-print" class="shrink-0 bg-white p-3">
                     <img src="{{ route('location.qr', $location) }}" alt="Código QR de {{ $location->name }}"
                         width="220" height="220" class="h-44 w-44 sm:h-52 sm:w-52">
                 </div>
@@ -282,9 +282,7 @@ new class extends Component {
                     <p class="font-semibold text-ink">{{ $location->name }}</p>
                     <p class="mt-1 break-all text-xs text-muted-foreground">
                         {{ route('wallet.links', ['qr_token' => $location->qr_token]) }}</p>
-                    <button type="button"
-                        onclick="(function(b){var i=b.closest('.flex').querySelector('img');var w=window.open('','_blank','width=600,height=600');w.document.write('<html><head><title>QR</title><style>@page{margin:0}body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh}img{width:360px;height:360px}</style></head><body><img src=&quot;'+i.src+'&quot;></body></html>');w.document.close();var img=w.document.querySelector('img');var p=function(){w.focus();w.print();w.close()};if(img.complete){p()}else{img.onload=p}})(this)"
-
+                    <button type="button" onclick="imprimirQR()"
                         class="mt-4 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">Imprimir
                         QR</button>
                 </div>
@@ -321,5 +319,45 @@ new class extends Component {
     </section>
 </div>
 </div>
+
+@script
+<script>
+    window.imprimirQR = function () {
+        const qr = document.getElementById('qr-print').innerHTML;
+        const ventana = window.open('', '_blank', 'width=400,height=400');
+
+        if (!ventana) {
+            alert('Permite las ventanas emergentes para imprimir.');
+            return;
+        }
+
+        ventana.document.write(`<!DOCTYPE html>
+<html>
+<head>
+    <title>Imprimir QR</title>
+    <style>
+        @page { margin: 0; }
+        body { display: flex; justify-content: center; align-items: center; margin: 20px; }
+        img, svg { width: 200px; height: 200px; }
+    </style>
+</head>
+<body>${qr}</body>
+</html>`);
+        ventana.document.close();
+
+        const imprimir = function () {
+            ventana.focus();
+            ventana.print();
+            ventana.close();
+        };
+        const img = ventana.document.querySelector('img');
+        if (img && !img.complete) {
+            img.onload = imprimir;
+        } else {
+            imprimir();
+        }
+    };
+</script>
+@endscript
 
 </div>
