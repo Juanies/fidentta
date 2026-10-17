@@ -19,6 +19,7 @@
     </main>
     <footer></footer>
 
+    @include('partials.chatwoot')
 </body>
 
 </html>

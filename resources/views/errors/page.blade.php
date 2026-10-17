@@ -47,6 +47,7 @@
             <p>&copy; {{ date('Y') }} Fidentta · Fidelidad digital para negocios locales.</p>
         </footer>
     </div>
+    @include('partials.chatwoot')
 </body>
 
 </html>

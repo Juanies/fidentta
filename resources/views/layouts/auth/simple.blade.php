@@ -27,6 +27,7 @@
     @endpersist
 
     @fluxScripts
+    @include('partials.chatwoot')
 </body>
 
 </html>
