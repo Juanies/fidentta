@@ -283,8 +283,8 @@ new class extends Component {
                     <p class="mt-1 break-all text-xs text-muted-foreground">
                         {{ route('wallet.links', ['qr_token' => $location->qr_token]) }}</p>
                     <button type="button"
-                        onclick="(function(b){var i=b.closest('.flex').querySelector('img');var w=window.open('','_blank','width=600,height=700');w.document.close();w.document.querySelector('h2').textContent=b.dataset.name;var img=w.document.querySelector('img');var p=function(){w.focus();w.print();w.close()};if(img.complete){p()}else{img.onload=p}})(this)"
-                        data-name="{{ $location->name }}"
+                        onclick="(function(b){var i=b.closest('.flex').querySelector('img');var w=window.open('','_blank','width=600,height=600');w.document.write('<html><head><title>QR</title><style>@page{margin:0}body{margin:0;display:flex;align-items:center;justify-content:center;min-height:100vh}img{width:360px;height:360px}</style></head><body><img src=&quot;'+i.src+'&quot;></body></html>');w.document.close();var img=w.document.querySelector('img');var p=function(){w.focus();w.print();w.close()};if(img.complete){p()}else{img.onload=p}})(this)"
+
                         class="mt-4 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">Imprimir
                         QR</button>
                 </div>
