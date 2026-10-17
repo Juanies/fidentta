@@ -282,7 +282,9 @@ new class extends Component {
                     <p class="font-semibold text-ink">{{ $location->name }}</p>
                     <p class="mt-1 break-all text-xs text-muted-foreground">
                         {{ route('wallet.links', ['qr_token' => $location->qr_token]) }}</p>
-                    <button type="button" onclick="window.print()"
+                    <button type="button"
+                        onclick="(function(b){var i=b.closest('.flex').querySelector('img');var w=window.open('','_blank','width=600,height=700');w.document.close();w.document.querySelector('h2').textContent=b.dataset.name;var img=w.document.querySelector('img');var p=function(){w.focus();w.print();w.close()};if(img.complete){p()}else{img.onload=p}})(this)"
+                        data-name="{{ $location->name }}"
                         class="mt-4 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700">Imprimir
                         QR</button>
                 </div>
