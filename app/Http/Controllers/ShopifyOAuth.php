@@ -8,11 +8,14 @@ use App\Models\Team;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class ShopifyOAuth extends Controller
 {
     private const SHOP_PATTERN = '/^[a-z0-9][a-z0-9\-]*\.myshopify\.com$/';
+
+    private ?string $lastWebhookError = null;
 
     public function connect(Request $request): RedirectResponse
     {
@@ -77,7 +80,7 @@ class ShopifyOAuth extends Controller
         $integration->webhook_token ??= Str::random(48);
 
         if (! $this->registerWebhooks($integration)) {
-            return $this->back($team, 'Conectado, pero no se pudieron crear los webhooks en Shopify. Inténtalo de nuevo.', true);
+            return $this->back($team, 'Conectado, pero Shopify rechazó crear los webhooks (' . $this->lastWebhookError . ').', true);
         }
 
         $integration->save();
@@ -96,8 +99,19 @@ class ShopifyOAuth extends Controller
                     'webhook' => ['topic' => $topic, 'address' => $address, 'format' => 'json'],
                 ]);
 
-            // 422 significa que ya existía con esa misma dirección.
-            if (! $response->successful() && $response->status() !== 422) {
+            $body = $response->json('errors');
+            $taken = $response->status() === 422 && str_contains(json_encode($body), 'already been taken');
+
+            if (! $response->successful() && ! $taken) {
+                Log::warning('Shopify webhook registration failed.', [
+                    'shop' => $integration->shop_domain,
+                    'topic' => $topic,
+                    'address' => $address,
+                    'status' => $response->status(),
+                    'errors' => $body,
+                ]);
+                $this->lastWebhookError = "{$topic}: HTTP {$response->status()} " . Str::limit(json_encode($body, JSON_UNESCAPED_UNICODE), 200);
+
                 return false;
             }
         }
