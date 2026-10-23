@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->preventRequestForgery(except: [
             'passkit/v1/devices/*/registrations/*/*',
+            'webhooks/shopify/*',
         ]);
     })
     ->withMiddleware(function (Middleware $middleware): void {

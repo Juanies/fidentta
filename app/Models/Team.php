@@ -53,6 +53,12 @@ class Team extends Model
         });
     }
 
+    /** @return HasOne<ShopifyIntegration, $this> */
+    public function shopifyIntegration(): HasOne
+    {
+        return $this->hasOne(ShopifyIntegration::class);
+    }
+
     /** @return HasMany<Location, $this> */
     public function locations(): HasMany
     {

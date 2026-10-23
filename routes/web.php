@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\Card;
 use App\Http\Controllers\CardScan;
+use App\Http\Controllers\ShopifyOAuth;
+use App\Http\Controllers\ShopifyPrivacyWebhook;
+use App\Http\Controllers\ShopifyWebhook;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\SubscriptionSuccess;
 use App\Http\Middleware\EnsureTeamMembership;
@@ -36,6 +39,15 @@ Route::get(
 )->name('wallet.links');
 
 Route::get('/c/{token}', [CardScan::class, 'show'])->name('wallet.scan');
+Route::post('/webhooks/shopify/privacy/{topic}', ShopifyPrivacyWebhook::class)
+    ->where('topic', 'customers-data-request|customers-redact|shop-redact')
+    ->middleware('throttle:120,1')
+    ->name('webhooks.shopify.privacy');
+Route::post('/webhooks/shopify/{token}', ShopifyWebhook::class)->middleware('throttle:120,1')->name('webhooks.shopify');
+Route::get('/integrations/shopify/connect', [ShopifyOAuth::class, 'connect'])
+    ->middleware(['auth', 'verified'])->name('shopify.connect');
+Route::get('/integrations/shopify/callback', [ShopifyOAuth::class, 'callback'])
+    ->middleware(['auth', 'verified'])->name('shopify.callback');
 Route::post('/c/{token}/stamp', [CardScan::class, 'stamp'])->middleware('auth')->name('wallet.scan.stamp');
 
 Route::get('/auth/redirect', [GoogleAuthController::class, 'redirect'])->name('google.redirect');

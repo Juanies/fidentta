@@ -36,6 +36,14 @@ return [
 
     ],
 
+    'shopify' => [
+        // SHOPIFY_APP_ID es el Client ID y SHOPIFY_APP_CLIENT el Client Secret de la app.
+        'client_id' => env('SHOPIFY_APP_ID'),
+        'client_secret' => env('SHOPIFY_APP_CLIENT'),
+        'scopes' => 'read_orders',
+        'api_version' => env('SHOPIFY_API_VERSION', '2025-07'),
+    ],
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
