@@ -106,6 +106,21 @@ test('registering through a referral link gives a stamp to both cards', function
         ->and(CardTransaction::whereNull('user_id')->count())->toBe(2);
 });
 
+test('guest mode without registration gives no referral stamps', function () {
+    [$team, $location, $card] = referralSetup();
+    $team->update(['customer_registration_type' => 'none']);
+
+    $this->get(route('wallet.scan', $card->referral_token))
+        ->assertOk()
+        ->assertSee('no da sellos');
+
+    $this->get(route('wallet.card', ['qr_token' => $location->qr_token, 'ref' => $card->referral_token]));
+    $this->post(route('wallet.card.store', $location->qr_token))->assertOk();
+
+    expect($card->fresh()->stamps_collected)->toBe(0)
+        ->and(Referral::count())->toBe(0);
+});
+
 test('registering without a referral link gives no bonus', function () {
     [, $location, $card] = referralSetup();
 
@@ -123,3 +138,21 @@ test('invalid or self referrals are ignored', function () {
 
     expect(Referral::count())->toBe(0);
 });
+
+test('the referrals dashboard lists the team referrals', function () {
+    [$team, $location, $card] = referralSetup();
+    $user = User::factory()->create();
+    $team->members()->attach($user, ['role' => 'admin']);
+    $user->switchTeam($team);
+
+    $this->get(route('wallet.card', ['qr_token' => $location->qr_token, 'ref' => $card->referral_token]));
+    registerReferred($location)->assertOk();
+
+    $this->actingAs($user);
+
+    Livewire\Livewire::test('pages::dashboard.referidos')
+        ->assertSee('ana@example.com')
+        ->assertSee('luis@example.com');
+});
+
+

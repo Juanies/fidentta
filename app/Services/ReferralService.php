@@ -27,6 +27,11 @@ class ReferralService
 
         $newCard->loadMissing('customer');
 
+        // Sin registro no hay identidad: el premio exige clientes registrados.
+        if ($newCard->customer?->guest || $referrer?->customer?->guest) {
+            return false;
+        }
+
         if (! $referrer || $referrer->id === $newCard->id || $referrer->customer_id === $newCard->customer_id) {
             return false;
         }

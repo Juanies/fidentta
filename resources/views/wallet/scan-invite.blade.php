@@ -3,11 +3,20 @@
         <p class="text-sm font-semibold text-brand">{{ $team->name }}</p>
         <h1 class="mt-2 text-2xl font-semibold text-ink">Te han invitado a su tarjeta de fidelidad</h1>
         <p class="mt-2 text-sm leading-6 text-muted-foreground">
-            Añade tu tarjeta a tu wallet y los dos conseguiréis un sello gratis.
+            @if ($team->customer_registration_type === 'none')
+                Este negocio no pide registro, así que esta invitación no da sellos. Los referidos solo suman
+                sellos en negocios con registro de clientes.
+            @else
+                Añade tu tarjeta a tu wallet y los dos conseguiréis un sello gratis.
+            @endif
         </p>
         <a href="{{ $registerUrl }}"
             class="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-ink px-4 py-3 text-sm font-semibold text-white transition hover:bg-brand-700">
-            Obtener mi tarjeta y ganar un sello
+            @if ($team->customer_registration_type === 'none')
+                Obtener mi tarjeta
+            @else
+                Obtener mi tarjeta y ganar un sello
+            @endif
         </a>
         <p class="mt-6 text-xs text-muted-foreground">
             ¿Eres del equipo de {{ $team->name }}?

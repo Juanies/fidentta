@@ -201,7 +201,9 @@ class Card extends Controller
 
         if ($mode === 'none') {
             $request->session()->put("guest_customer_{$team->id}_{$location->id}", $customer->id);
-        } elseif ($referrals->reward($request->session()->pull('referral_token'), $card)) {
+        }
+
+        if ($referrals->reward($request->session()->pull('referral_token'), $card)) {
             $card->refresh();
         }
 

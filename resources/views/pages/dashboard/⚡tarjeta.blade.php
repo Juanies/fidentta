@@ -466,6 +466,12 @@ new class extends Component {
                         <span class="mt-1 block text-xs text-muted-foreground">Eliges los campos.</span>
                     </button>
                 </div>
+                @if ($modoRegistro === 'none')
+                    <p class="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+                        Con «Sin registro» el programa de referidos no da sellos. Elige «Básico» o «Personalizado»
+                        para que quien invita y el invitado ganen un sello.
+                    </p>
+                @endif
                 @if ($modoRegistro === 'normal')
                     <div
                         class="mt-4 flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3">

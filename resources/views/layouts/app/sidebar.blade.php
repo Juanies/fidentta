@@ -38,6 +38,13 @@
                     {{ __('Recompensas') }}
                     <livewire:pending-rewards-badge />
                 </flux:sidebar.item>
+                <flux:sidebar.item icon="user-plus"
+                    :href="route('dashboard.referidos', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
+                    :current="request()->routeIs('dashboard.referidos')"
+                    class="text-white/80! hover:bg-fidentta-cyan/15! hover:text-white! data-current:bg-fidentta-cyan/25! data-current:text-fidentta-cyan!"
+                    wire:navigate>
+                    {{ __('Referidos') }}
+                </flux:sidebar.item>
                 <flux:sidebar.item icon="gift"
                     :href="route('dashboard.fidelizacion', ['current_team' => request()->route('current_team') ?? auth()->user()->currentTeam?->slug])"
                     :current="request()->routeIs('dashboard.fidelizacion')"
