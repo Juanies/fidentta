@@ -7,6 +7,7 @@ use App\Models\CustomerRegistrationField;
 use App\Models\CustomerUser;
 use App\Models\Location;
 use App\Models\Team;
+use App\Services\ReferralService;
 use App\Services\WalletStampProgress;
 use BaconQrCode\Common\ErrorCorrectionLevel;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
@@ -30,8 +31,12 @@ use Spatie\LaravelMobilePass\Models\MobilePass;
 
 class Card extends Controller
 {
-    public function index(string $qr_token): View
+    public function index(Request $request, string $qr_token): View
     {
+        if (is_string($ref = $request->query('ref')) && $ref !== '') {
+            $request->session()->put('referral_token', Str::limit($ref, 40, ''));
+        }
+
         $location = Location::where('qr_token', $qr_token)
             ->with(['team.customerRegistrationFields' => fn($query) => $query
                 ->where('is_active', true)
@@ -72,7 +77,7 @@ class Card extends Controller
         ]);
     }
 
-    public function store(Request $request, string $qr_token): View
+    public function store(Request $request, string $qr_token, ReferralService $referrals): View
     {
         $location = Location::where('qr_token', $qr_token)
             ->with(['team.customerRegistrationFields' => fn($query) => $query
@@ -196,6 +201,8 @@ class Card extends Controller
 
         if ($mode === 'none') {
             $request->session()->put("guest_customer_{$team->id}_{$location->id}", $customer->id);
+        } elseif ($referrals->reward($request->session()->pull('referral_token'), $card)) {
+            $card->refresh();
         }
 
         $walletUrls = $this->issueWalletPasses($customer, $card);
@@ -353,7 +360,7 @@ class Card extends Controller
             $pass = $passBuilder
                 ->setBackgroundColor($backgroundColor)
                 ->setForegroundColor('#FFFFFF')
-                ->setBarcode(BarcodeType::Qr, 'FIDELIDAD-CARD-' . $card->id, (string) $card->id)
+                ->setBarcode(BarcodeType::Qr, route('wallet.scan', ['token' => $card->referral_token]), (string) $card->id)
                 ->addField('stamps', $card->stamps_collected . '/' . $requiredStamps, label: 'Sellos')
                 ->addSecondaryField('progress', $progress, label: 'Progreso')
                 ->addSecondaryField('reward', (string) $design?->reward, label: 'Recompensa')
@@ -471,7 +478,7 @@ class Card extends Controller
                 ->setBalanceString($card->stamps_collected . '/' . $requiredStamps)
                 ->setBalanceLabel('Sellos')
                 ->addTextModule('Progreso', $progress, 'stamp_progress')
-                ->setBarcode(BarcodeType::Qr, route('wallet.card', ['qr_token' => $customer->location->qr_token]))
+                ->setBarcode(BarcodeType::Qr, route('wallet.scan', ['token' => $card->referral_token]))
                 ->save();
 
             $customer->addMobilePass($pass);

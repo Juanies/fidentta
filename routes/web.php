@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Card;
+use App\Http\Controllers\CardScan;
 use App\Http\Controllers\GoogleAuthController;
 use App\Http\Controllers\SubscriptionSuccess;
 use App\Http\Middleware\EnsureTeamMembership;
@@ -33,6 +34,9 @@ Route::get(
     '/location/{qr_token}/links',
     [Card::class, 'pageLinks']
 )->name('wallet.links');
+
+Route::get('/c/{token}', [CardScan::class, 'show'])->name('wallet.scan');
+Route::post('/c/{token}/stamp', [CardScan::class, 'stamp'])->middleware('auth')->name('wallet.scan.stamp');
 
 Route::get('/auth/redirect', [GoogleAuthController::class, 'redirect'])->name('google.redirect');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('google.callback');

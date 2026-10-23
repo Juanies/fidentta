@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 #[Fillable(['customer_id', 'team_id', 'card_design_id', 'stamps_collected', 'is_active', 'card_type'])]
 
@@ -15,6 +16,10 @@ class card extends Model
 {
     protected static function booted(): void
     {
+        static::creating(function (card $card) {
+            $card->referral_token ??= Str::random(32);
+        });
+
         static::updated(function (card $card) {
             if ($card->wasChanged('stamps_collected')) {
                 DB::afterCommit(function () use ($card) {

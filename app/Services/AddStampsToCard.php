@@ -20,6 +20,22 @@ class AddStampsToCard
         int $amount = 1,
         ?string $requestKey = null,
     ): CardTransaction {
+        return $this->stamp($card, $user, $location, $amount, $requestKey);
+    }
+
+    /** Sello automático (p. ej. bonus por referido), sin usuario del equipo. */
+    public function addAutomatic(LoyaltyCard $card, Location $location, int $amount = 1): CardTransaction
+    {
+        return $this->stamp($card, null, $location, $amount, null);
+    }
+
+    private function stamp(
+        LoyaltyCard $card,
+        ?User $user,
+        Location $location,
+        int $amount,
+        ?string $requestKey,
+    ): CardTransaction {
         if ($amount < 1) {
             throw ValidationException::withMessages([
                 'amount' => 'Debes añadir al menos un sello.',
@@ -32,7 +48,7 @@ class AddStampsToCard
                 ->lockForUpdate()
                 ->findOrFail($card->id);
 
-            if (! $user->belongsToTeam($lockedCard->team)) {
+            if ($user !== null && ! $user->belongsToTeam($lockedCard->team)) {
                 throw new AuthorizationException('No tienes acceso al negocio de esta tarjeta.');
             }
 
@@ -97,14 +113,14 @@ class AddStampsToCard
             return $lockedCard->cardTransactions()->create([
                 'customer_id' => $lockedCard->customer_id,
                 'location_id' => $location->id,
-                'user_id' => $user->id,
+                'user_id' => $user?->id,
                 'stamps_added' => $amount,
                 'request_key' => $requestKey,
             ]);
         });
     }
 
-    private function recordReward(LoyaltyCard $card, User $user, int $cycleNumber): void
+    private function recordReward(LoyaltyCard $card, ?User $user, int $cycleNumber): void
     {
         $card->rewards()->create([
             'team_id' => $card->team_id,
@@ -112,7 +128,7 @@ class AddStampsToCard
             'reward_name' => $card->cardDesign->reward ?: 'Recompensa',
             'cycle_number' => $cycleNumber,
             'earned_at' => now(),
-            'earned_by' => $user->id,
+            'earned_by' => $user?->id,
         ]);
     }
 }
